@@ -7,7 +7,14 @@
         "exited": false
     },
     "m_SelectedPriority": 0,
-    "m_KnownPackagesForSerialization": [],
+    "m_KnownPackagesForSerialization": [
+        {
+            "deviceId": "44352e62",
+            "name": "ch.deletescape.lawnchair.plah",
+            "processId": 3470,
+            "exited": false
+        }
+    ],
     "m_Tags": {
         "m_Entries": [
             {
