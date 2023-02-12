@@ -1,10 +1,10 @@
 {
-    "m_SelectedDeviceId": "44352e62",
+    "m_SelectedDeviceId": "65a155e1",
     "m_SelectedPackage": {
-        "deviceId": "",
-        "name": "",
-        "processId": 0,
-        "exited": false
+        "deviceId": "65a155e1",
+        "name": "com.MonsterNetst.YAVR_Player",
+        "processId": 11229,
+        "exited": true
     },
     "m_SelectedPriority": 0,
     "m_KnownPackagesForSerialization": [
@@ -13,6 +13,42 @@
             "name": "ch.deletescape.lawnchair.plah",
             "processId": 3470,
             "exited": false
+        },
+        {
+            "deviceId": "44352e62",
+            "name": "com.MonsterNetst.YAVR_Player",
+            "processId": 26508,
+            "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.miui.home",
+            "processId": 3107,
+            "exited": false
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.MonsterNetst.YAVR_Player",
+            "processId": 11229,
+            "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.MonsterNetst.YAVR_Player",
+            "processId": 15445,
+            "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.MonsterNetst.YAVR_Player",
+            "processId": 17602,
+            "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.MonsterNetst.YAVR_Player",
+            "processId": 18475,
+            "exited": true
         }
     ],
     "m_Tags": {

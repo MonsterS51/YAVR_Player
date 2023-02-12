@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Google.XR.Cardboard;
 using LibVLCSharp;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.XR.Management;
 
 public class VrPlayerController : MonoBehaviour
 {
@@ -29,10 +31,19 @@ public class VrPlayerController : MonoBehaviour
 
 	public bool logToConsole = false; //Log function calls and LibVLC logs to Unity console
 
+	private Camera _mainCamera;
+
+	public MediaManager mm = new();
+
 	//Unity Awake, OnDestroy, and Update functions
 	#region unity
 	void Awake()
 	{
+		_mainCamera = Camera.main;
+		Screen.sleepTimeout = SleepTimeout.NeverSleep;
+
+		if (!Api.HasDeviceParams())	Api.ScanDeviceParams();	
+
 		//Setup LibVLC
 		if (libVLC == null)
 			CreateLibVLC();
@@ -50,6 +61,9 @@ public class VrPlayerController : MonoBehaviour
 		//Setup Media Player
 		CreateMediaPlayer();
 
+		mm._libVLC = libVLC;
+		mm.InitializeMediaDiscoverers();
+
 		//Play On Start
 		if (playOnAwake)
 			Open();
@@ -57,12 +71,35 @@ public class VrPlayerController : MonoBehaviour
 
 	void OnDestroy()
 	{
+		mm.Dispose();
+
 		//Dispose of mediaPlayer, or it will stay in nemory and keep playing audio
 		DestroyMediaPlayer();
 	}
 
 	void Update()
 	{
+
+		if (_isVrModeEnabled)
+		{
+			if (Api.IsCloseButtonPressed)
+			{
+				//ExitVR();
+			}
+
+			if (Api.IsGearButtonPressed) Api.ScanDeviceParams();
+			Api.UpdateScreenParams();
+		}
+		else
+		{
+			// TODO(b/171727815): Add a button to switch to VR mode.
+			//if (_isScreenTouched)
+			//{
+			//	EnterVR();
+			//}
+		}
+
+
 		//Get size every frame
 		uint height = 0;
 		uint width = 0;
@@ -88,8 +125,32 @@ public class VrPlayerController : MonoBehaviour
 			}
 		}
 	}
+
+	void OnApplicationFocus(bool hasFocus)
+	{
+		if (!hasFocus) mediaPlayer?.SetPause(true);
+	}
+
+	void OnApplicationPause(bool pauseStatus)
+	{
+		if (pauseStatus) mediaPlayer?.SetPause(true);
+	}
+
 	#endregion
 
+	/// <summary>
+	/// Gets a value indicating whether the VR mode is enabled.
+	/// </summary>
+	private bool _isVrModeEnabled
+	{
+		get
+		{
+			return XRGeneralSettings.Instance.Manager.isInitializationComplete;
+		}
+	}
+
+
+	//---
 
 	//Public functions that expose VLC MediaPlayer functions in a Unity-friendly way. You may want to add more of these.
 	#region vlc
@@ -108,6 +169,18 @@ public class VrPlayerController : MonoBehaviour
 
 		var trimmedPath = path.Trim(new char[] { '"' });//Windows likes to copy paths with quotes but Uri does not like to open them
 		mediaPlayer.Media = new Media(new Uri(trimmedPath));
+
+		Log($"VLCPlayerExample Media {mediaPlayer.Media.Mrl}");
+
+		Play();
+	}
+
+	public void Open(Media media)
+	{
+		Log($"VLCPlayerExample Open <{media.Mrl}>");
+
+		mediaPlayer.Media = media;
+
 		Play();
 	}
 
@@ -131,6 +204,7 @@ public class VrPlayerController : MonoBehaviour
 
 		_vlcTexture = null;
 		texture = null;
+		RenderSettings.skybox.mainTexture = Texture2D.blackTexture;
 	}
 
 	public void Seek(long timeDelta)
@@ -214,6 +288,13 @@ public class VrPlayerController : MonoBehaviour
 		Log("VLCPlayerExample Unselect " + type);
 		mediaPlayer?.Unselect(type);
 	}
+
+	public string GetCurrentPlayedTitle()
+	{
+		if (mediaPlayer.Media == null) return string.Empty;
+		return mediaPlayer.Media.Meta(MetadataType.Title);
+	}
+
 
 	//This returns the video orientation for the currently playing video, if there is one
 	public VideoOrientation? GetVideoOrientation()
@@ -328,10 +409,10 @@ public class VrPlayerController : MonoBehaviour
 		return tracks;
 	}
 
-	void Log(object message)
+	void Log(string message)
 	{
 		if (logToConsole)
-			Debug.Log(message);
+			Debug.Log($"[YAVR]: {message}");
 	}
 	#endregion
 
