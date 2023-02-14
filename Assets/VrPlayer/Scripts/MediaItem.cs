@@ -43,6 +43,8 @@ public class MediaItem
 		return $"<{(isFolder ? "DIR " : "")}{MediaName}({media.SubItems.Count})>";
 	}
 
+	private string[] vFormats = { ".mkv", ".mp4", ".avi", ".mpg", ".mpeg", ".ts", ".webm" };
+
 	private void SetMediaEvents(Media media)
 	{
 
@@ -51,9 +53,14 @@ public class MediaItem
 		{
 			try
 			{
-				Debug.Log($"[YAVR]: Add SubItem <{e.Media.Mrl}>");
+				//Debug.Log($"[YAVR]: Add SubItem <{e.Media.Mrl}>");
 				var newMI = new MediaItem(e.Media, this);
 				newMI.isNetwork = isNetwork;
+
+				//- filter by extension
+				var ext = Path.GetExtension(newMI.MediaName);
+				if (!newMI.isFolder && !vFormats.Contains(ext)) return;
+
 				listSubMI.Add(newMI);
 			}
 			catch (Exception ex)
@@ -64,7 +71,7 @@ public class MediaItem
 
 		media.SubItems.ItemDeleted += (x, e) =>
 		{
-			Debug.Log($"[YAVR]: ItemDeleted <{e.Media.Mrl}>");
+			//Debug.Log($"[YAVR]: ItemDeleted <{e.Media.Mrl}>");
 			try
 			{
 				listSubMI.RemoveAll(x => x.media == e.Media);

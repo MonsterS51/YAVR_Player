@@ -186,9 +186,9 @@ public class VrPlayerController : MonoBehaviour
 	public void Open(Media media)
 	{
 		Log($"VLCPlayerExample Open <{media.Mrl}>");
-
+		if (mediaPlayer.Media != null)
+			mediaPlayer.Media.Dispose();
 		mediaPlayer.Media = media;
-
 		Play();
 	}
 

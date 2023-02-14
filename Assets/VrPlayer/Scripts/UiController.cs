@@ -26,6 +26,8 @@ public class UiController : MonoBehaviour
 	public GameObject stopButton;
 	public GameObject seekPrevButton;
 	public GameObject seekForwardButton;
+	public GameObject nextFileButton;
+	public GameObject prevFileButton;
 	public Slider progressBar;
 
 	//- Files List Panel
@@ -60,6 +62,11 @@ public class UiController : MonoBehaviour
 		stopButton.GetComponent<Button>().onClick.AddListener(() => { vpCon.Stop(); progressBar.value = 0; });
 		seekPrevButton.GetComponent<Button>().onClick.AddListener(() => { vpCon.Seek(-10000); });
 		seekForwardButton.GetComponent<Button>().onClick.AddListener(() => { vpCon.Seek(10000); });
+
+		nextFileButton.GetComponent<Button>().onClick.AddListener(() => { PlayNextFile(); });
+		prevFileButton.GetComponent<Button>().onClick.AddListener(() => { PlayNextFile(true); });
+
+		
 
 		refreshButton.GetComponent<Button>().onClick.AddListener(() => { RefreshContent(); });
 		upButton.GetComponent<Button>().onClick.AddListener(() => { GoUp(); });
@@ -327,10 +334,9 @@ public class UiController : MonoBehaviour
 
 	private void OpenMediaFile(MediaItem mi)
 	{
-
+		//- auto detect VR video type by name
 		if (mi.name.Contains("360")) vpCon.SetImageType(true);
 		else vpCon.SetImageType(false);
-
 		if (mi.name.Contains("_ou") | mi.name.Contains("_OU")) vpCon.SetVideoLayout(false);
 		else vpCon.SetVideoLayout(true);
 
@@ -357,5 +363,38 @@ public class UiController : MonoBehaviour
 
 	}
 
+	public void PlayNextFile(bool prev = false)
+	{
+		if (currentMI == null) return;
+		var curMrl = vpCon?.mediaPlayer?.Media?.Mrl;
+		if (string.IsNullOrWhiteSpace(curMrl)) return;
+
+		var curMi = currentMI.listSubMI.FirstOrDefault(x => x.media.Mrl == curMrl);
+		if (curMi == null) return;
+
+		var curInd = currentMI.listSubMI.IndexOf(curMi);
+		MediaItem nextMI = null;
+
+		var before = currentMI.listSubMI.GetRange(0, curInd);
+		var after = currentMI.listSubMI.GetRange(curInd + 1, currentMI.listSubMI.Count - curInd - 1);
+		var total = after.Concat(before).ToList();
+
+		if (prev)
+		{
+			after.Reverse();
+			before.Reverse();
+			total = before.Concat(after).ToList();
+		}
+
+		for (int i = 0; i < total.Count(); i++)
+		{
+			var foundMI = total[i];
+			if (foundMI.isFolder) continue;
+			nextMI = foundMI;
+			break;
+		}
+		if (curMi == nextMI) return;
+		if (nextMI != null) OpenMediaFile(nextMI);
+	}
 
 }
