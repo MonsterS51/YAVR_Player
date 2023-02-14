@@ -35,10 +35,17 @@ public class VrPlayerController : MonoBehaviour
 
 	public MediaManager mm = new();
 
+	public static string cachePath;
+
+
 	//Unity Awake, OnDestroy, and Update functions
 	#region unity
 	void Awake()
 	{
+		RenderSettings.skybox.mainTexture = Texture2D.blackTexture;
+
+		cachePath = Application.temporaryCachePath;
+
 		_mainCamera = Camera.main;
 		Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
@@ -124,6 +131,7 @@ public class VrPlayerController : MonoBehaviour
 				Graphics.Blit(_vlcTexture, texture, flip, Vector2.zero); //If you wanted to do post processing outside of VLC you could use a shader here.
 			}
 		}
+
 	}
 
 	void OnApplicationFocus(bool hasFocus)
@@ -349,6 +357,8 @@ public class VrPlayerController : MonoBehaviour
 		};
 	}
 
+	public bool isBuffering = false;
+
 	//Create a new MediaPlayer object and dispose of the old one. 
 	void CreateMediaPlayer()
 	{
@@ -358,6 +368,14 @@ public class VrPlayerController : MonoBehaviour
 			DestroyMediaPlayer();
 		}
 		mediaPlayer = new MediaPlayer(libVLC);
+		mediaPlayer.EnableHardwareDecoding = true;
+
+		//- for buffering indication
+		mediaPlayer.Buffering += (s, e) => { isBuffering = true; };
+
+		mediaPlayer.FileCaching = 500;
+		mediaPlayer.NetworkCaching = 500;
+
 	}
 
 	//Dispose of the MediaPlayer object. 
@@ -415,5 +433,23 @@ public class VrPlayerController : MonoBehaviour
 			Debug.Log($"[YAVR]: {message}");
 	}
 	#endregion
+
+	public void SetVideoLayout(bool isSBS)
+	{
+		if (isSBS) RenderSettings.skybox.SetFloat("_Layout", 1f);
+		else RenderSettings.skybox.SetFloat("_Layout", 2f);
+	}
+
+	public void SetImageType(bool is360)
+	{
+		if (is360) {
+			RenderSettings.skybox.SetFloat("_Rotation", 90f);
+			RenderSettings.skybox.SetFloat("_ImageType", 0f); 
+		}
+		else {
+			RenderSettings.skybox.SetFloat("_Rotation", 0f);
+			RenderSettings.skybox.SetFloat("_ImageType", 1f);
+		}
+	}
 
 }

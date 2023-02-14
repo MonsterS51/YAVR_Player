@@ -9,7 +9,7 @@ using UnityEngine.InputSystem.LowLevel;
 [AddComponentMenu("Event/Gaze Input Module X")]
 public class GazeInputModuleX : PointerInputModule
 {
-
+	public GameObject reticle;
 	public GameObject m_CurrentFocusedGameObject;
 
 	public override void Process()
@@ -21,7 +21,7 @@ public class GazeInputModuleX : PointerInputModule
 	{
 		return Input.GetKeyDown(KeyCode.Space) ||
 			Google.XR.Cardboard.Api.IsTriggerPressed ||
-			(Gamepad.current != null && Gamepad.current[GamepadButton.A].isPressed);
+			(Gamepad.current != null && Gamepad.current[GamepadButton.A].wasPressedThisFrame);
 	}
 
 
@@ -54,6 +54,9 @@ public class GazeInputModuleX : PointerInputModule
 		if (IsTriggerPushed()) ProcessMousePress(pointerEventData);
 		ProcessMove(pointerEventData);
 		//ProcessDrag(pointerEventData);
+
+		//- hide reticle on nothing
+		reticle.SetActive(m_CurrentFocusedGameObject != null);
 	}
 
 

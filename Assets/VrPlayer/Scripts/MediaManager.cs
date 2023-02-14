@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using LibVLCSharp;
 using UnityEngine;
 
@@ -19,55 +21,11 @@ public class MediaManager
 		{
 			var discoverer = new MediaDiscoverer(_libVLC, md.Name);
 			discoverer.MediaList.ItemAdded += (x, e) => { Debug.Log($"[YAVR]: Found {md.Name} : {e.Media.Meta(MetadataType.Title)}"); };
-			//discoverer.MediaList.ItemDeleted += MediaList_ItemDeleted;
 			_mediaDiscoverers.Add(discoverer);
 			discoverer.Start();
 			Debug.Log($"[YAVR]: Discover found {md.Name}");
 		}
 
-	}
-
-
-
-	public class MediaItem
-	{
-
-		public MediaItem(Media media, MediaItem parentMI = null)
-		{
-			isFolder = media.Type == MediaType.Directory;
-			this.media = media;
-			name = MediaName;
-			this.parentMI = parentMI;
-
-			media.SubItemAdded += (x, e) =>
-			{
-				try
-				{
-					Debug.Log($"[YAVR]: Add SubItem <{e.SubItem.Mrl}>");
-					var newMI = new MediaItem(e.SubItem, this);
-					newMI.isNetwork = isNetwork;
-					listSubMI.Add(newMI);
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError($"[YAVR] SubItemAdded : Error !");
-					Debug.LogException(ex);
-				}
-			};
-		}
-		public string name;
-		public string MediaName { get { return media.Meta(MetadataType.Title); } }
-		public bool isFolder;
-		public bool isNetwork = false;
-		public Media media;
-		public List<MediaItem> listSubMI = new();
-		public MediaItem parentMI = null;
-
-		public override string ToString()
-		{
-
-			return $"<{(isFolder ? "DIR " : "")}{MediaName}({media.SubItems.Count})>";
-		}
 	}
 
 	private List<MediaItem> LoadLocalDrives()
@@ -79,19 +37,19 @@ public class MediaManager
 			if (!drive.IsReady) continue;
 
 			var diskMedia = new Media(new Uri($"{drive.Name}"));
-			var newMId = new MediaItem(diskMedia);
-			newMId.name = drive.Name;
-			newMId.isFolder = true;
-			newMId.isNetwork = false;
+			var newMI = new MediaItem(diskMedia);
+			newMI.name = drive.Name;
+			newMI.isFolder = true;
+			newMI.isNetwork = false;
 
-			var task = diskMedia.ParseAsync(_libVLC);
-			task.Wait();
-			rootItems.Add(newMId);
+			//var task = newMI.StartParse();
+			//task.Wait();
+			rootItems.Add(newMI);
 		}
 		return rootItems;
 	}
 
-	private List<MediaItem> LoadAndroidStoraged()
+	private List<MediaItem> LoadAndroidStorages()
 	{
 		List<MediaItem> rootItems = new();
 
@@ -110,14 +68,14 @@ public class MediaManager
 			if (!Directory.Exists(dir)) continue;
 
 			var diskMedia = new Media(new Uri($"{dir}"));
-			var newMId = new MediaItem(diskMedia);
-			newMId.name = dir;
-			newMId.isFolder = true;
-			newMId.isNetwork = false;
+			var newMI = new MediaItem(diskMedia);
+			newMI.name = dir;
+			newMI.isFolder = true;
+			newMI.isNetwork = false;
 
-			var task = diskMedia.ParseAsync(_libVLC);
-			task.Wait();
-			rootItems.Add(newMId);
+			//var task = newMI.StartParse();
+			//task.Wait();
+			rootItems.Add(newMI);
 		}
 		return rootItems;
 	}
@@ -133,6 +91,8 @@ public class MediaManager
 				var newMI = new MediaItem(media);
 				newMI.name = $"(LAN) {newMI.MediaName}";
 				newMI.isNetwork = true;
+				//var task = newMI.StartParse();
+				//task.Wait();
 				rootItems.Add(newMI);
 			}
 		}
@@ -145,7 +105,7 @@ public class MediaManager
 		List<MediaItem> rootItems = new();
 
 		if (Application.platform == RuntimePlatform.Android)
-			rootItems.AddRange(LoadAndroidStoraged());
+			rootItems.AddRange(LoadAndroidStorages());
 		else
 			rootItems.AddRange(LoadLocalDrives());
 
