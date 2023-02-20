@@ -21,33 +21,33 @@
             "exited": true
         },
         {
-            "deviceId": "65a155e1",
-            "name": "com.miui.home",
-            "processId": 3107,
+            "deviceId": "44352e62",
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 10608,
             "exited": false
         },
         {
             "deviceId": "65a155e1",
-            "name": "com.MonsterNetst.YAVR_Player",
-            "processId": 23559,
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 16692,
             "exited": true
         },
         {
             "deviceId": "65a155e1",
-            "name": "com.MonsterNetst.YAVR_Player",
-            "processId": 25662,
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 17465,
             "exited": true
         },
         {
             "deviceId": "65a155e1",
-            "name": "com.MonsterNetst.YAVR_Player",
-            "processId": 30214,
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 18373,
             "exited": true
         },
         {
             "deviceId": "65a155e1",
-            "name": "com.MonsterNetst.YAVR_Player",
-            "processId": 10861,
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 25238,
             "exited": true
         }
     ],

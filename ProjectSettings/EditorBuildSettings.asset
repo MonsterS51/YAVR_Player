@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/VrPlayer/Scenes/VrPlayerScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   - enabled: 0
-    path: Assets/Samples/Google Cardboard XR Plugin for Unity/1.19.0/Hello Cardboard/Scenes/VrMode.unity
-    guid: 4812ec05e87b8414abcdfe0d625c0e60
+    path: Assets/VLCUnity/Demos/Scenes/VLC Canvas Example.unity
+    guid: b1b70164e45051b4fa2c1ea6575cdb0d
   m_configObjects:
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: dda20303fa1664d4b904eedd684d8331, type: 2}

@@ -31,11 +31,26 @@ For the Unity Android target, we support:
 
 /!\ OpenGL ES MUST be selected in the project settings as a target graphics API. Vulkan is NOT supported at this time.
 
-/!\ If the plugin complains about missing binaries and there is an error about this, make sure you have each architecture properly setup in the inspector for each binaries in each VLCUnity/Plugins/Android folders. Select a libvlc.so in any given folder, check the Inspector window of the Unity Editor and make sure the selected "Platform" and "CPU" are correct.
+/!\ If the plugin complains about missing binaries and there is an error about this, make sure you have each architecture properly setup in the inspector for each binaries in each VLCUnity/Plugins/Android/libs folders. Select a libvlc.so in any given folder, check the Inspector window of the Unity Editor and make sure the selected "Platform" and "CPU" are correct.
+
+/!\ If the scene starts but no video plays, make sure you set internet access to "required" in Unity player settings. The demo scenes play HTTP videos so your app needs the Android Internet permission.
+
+/!\ If running on Oculus, you may need to disable "Low Overhead Mode" which is not yet supported by vlc-unity. https://code.videolan.org/videolan/vlc-unity/-/issues/164
 
 Reminded: If you want to target arm64-v8a CPU architecture, you must select it in the player settings. To be able to select it, you need to switch the scripting backend to IL2CPP (as opposed to Mono). This is a Unity requirement unrelated to libvlc.
 
 VLC for Unity requires Android 16 minimum.
+
+## UWP
+
+For the Unity UWP target, we support:
+- x86_64,
+- ARM64.
+
+If you need 32 bit versions, feel free to email us with information regarding your use case at unity@videolabs.io
+
+
+In the publisher manifest, make sure the 'InternetClient' capability is enabled so that VLC can access remote streams.
 
 ## General
 

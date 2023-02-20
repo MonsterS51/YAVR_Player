@@ -40,6 +40,7 @@ public class UiController : MonoBehaviour
 	public GameObject contentScrollBar;
 	public GameObject textParse;
 	public GameObject textBuffering;
+	public GameObject textFPS;
 
 	//- Utils Panel
 	public GameObject utilsCanvas;
@@ -49,6 +50,9 @@ public class UiController : MonoBehaviour
 	public GameObject BtnSBS;
 	public GameObject BtnOU;
 
+	//- fps
+	[SerializeField] private float _fpsRefreshRate = 0.5f;
+	private float _fpsTimer;
 
 	void Awake() { }
 
@@ -66,7 +70,7 @@ public class UiController : MonoBehaviour
 		nextFileButton.GetComponent<Button>().onClick.AddListener(() => { PlayNextFile(); });
 		prevFileButton.GetComponent<Button>().onClick.AddListener(() => { PlayNextFile(true); });
 
-		
+
 
 		refreshButton.GetComponent<Button>().onClick.AddListener(() => { RefreshContent(); });
 		upButton.GetComponent<Button>().onClick.AddListener(() => { GoUp(); });
@@ -125,6 +129,13 @@ public class UiController : MonoBehaviour
 			if (Gamepad.current[GamepadButton.B].wasPressedThisFrame) Api.Recenter();
 		}
 
+		if (uiRoot.activeInHierarchy && Time.unscaledTime > _fpsTimer)
+		{
+			int fps = (int)(1f / Time.unscaledDeltaTime);
+			_fpsTimer = Time.unscaledTime + _fpsRefreshRate;
+			var tmpFps = textFPS.GetComponentInChildren<TextMeshProUGUI>();
+			tmpFps.text = $"FPS: {fps}";
+		}
 
 	}
 
@@ -183,6 +194,7 @@ public class UiController : MonoBehaviour
 
 	private void PlayPauseBtnPush()
 	{
+		if (vpCon.mediaPlayer == null) return;
 		if (vpCon.mediaPlayer.IsPlaying)
 		{
 			vpCon.mediaPlayer.Pause();
@@ -211,11 +223,11 @@ public class UiController : MonoBehaviour
 			GameObject entBtn;
 			if (mi.isFolder)
 			{
-				entBtn = CreateFileEntryBtn(mi.name, mi.GetThumbnailFromCache(), () => { OpenFolder(mi); });
+				entBtn = CreateFileEntryBtn(mi.name, true, mi.GetThumbnailFromCache(), () => { OpenFolder(mi); });
 			}
 			else
 			{
-				entBtn = CreateFileEntryBtn(mi.name, mi.GetThumbnailFromCache(), () => { OpenMediaFile(mi); });
+				entBtn = CreateFileEntryBtn(mi.name, false, mi.GetThumbnailFromCache(), () => { OpenMediaFile(mi); });
 			}
 			entBtn.transform.SetParent(filesListContent.transform, false);
 		}
@@ -264,7 +276,7 @@ public class UiController : MonoBehaviour
 
 
 	///<summary> Создание кнопки вкладки. </summary>
-	private GameObject CreateFileEntryBtn(string name, Texture2D icon, Action action)
+	private GameObject CreateFileEntryBtn(string name, bool isDirectory, Texture2D icon, Action action)
 	{
 		var newButton = Instantiate(fileButtonPrefab);
 		newButton.name = name;
@@ -275,25 +287,41 @@ public class UiController : MonoBehaviour
 		var btnComp = newButton.GetComponent<Button>();
 		btnComp.onClick.AddListener(() => action?.Invoke());
 
+		if (isDirectory)
+		{
+			var iconimage = newButton.transform.Find("IconFolder");
+			iconimage.gameObject.SetActive(true);
+			iconimage = newButton.transform.Find("IconFile");
+			iconimage.gameObject.SetActive(false);
+		} else
+		{
+			var iconimage = newButton.transform.Find("IconFolder");
+			iconimage.gameObject.SetActive(false);
+			iconimage = newButton.transform.Find("IconFile");
+			iconimage.gameObject.SetActive(true);
+		}
+
 		UpdateFileButtonThumbnail(newButton, icon);
 
 		return newButton;
 	}
 
-	private void UpdateFileButtonThumbnail(GameObject go, Texture2D icon)
+	private void UpdateFileButtonThumbnail(GameObject go, Texture2D thumbTex)
 	{
-		if (icon != null)
-		{
-			//- hide icon
-			var iconimage = go.transform.Find("IconImage");
-			iconimage.gameObject.SetActive(false);
+		if (thumbTex == null) return;
 
-			//- show thumbnail
-			var thumbImage = go.transform.Find("Thumbnail");
-			thumbImage.gameObject.SetActive(true);
-			var rawImage = thumbImage?.GetComponent<RawImage>();
-			if (rawImage != null) rawImage.texture = icon;
-		}
+		//- hide icon
+		var iconimage = go.transform.Find("IconFolder");
+		iconimage.gameObject.SetActive(false);
+		iconimage = go.transform.Find("IconFile");
+		iconimage.gameObject.SetActive(false);
+
+		//- show thumbnail
+		var thumbImage = go.transform.Find("Thumbnail");
+		thumbImage.gameObject.SetActive(true);
+		var rawImage = thumbImage?.GetComponent<RawImage>();
+		if (rawImage != null) rawImage.texture = thumbTex;
+
 	}
 
 
@@ -341,6 +369,7 @@ public class UiController : MonoBehaviour
 		else vpCon.SetVideoLayout(true);
 
 		currentMI?.CancelParseChildMedia();
+		vpCon.Stop();
 		vpCon.Open(mi.media);
 		UpdateTitle();
 	}
@@ -358,7 +387,7 @@ public class UiController : MonoBehaviour
 		}
 		catch (Exception ex)
 		{
-			Debug.LogError("Failed Clear Thumbnails Cache : " + ex.Message) ;
+			Debug.LogError("Failed Clear Thumbnails Cache : " + ex.Message);
 		}
 
 	}

@@ -16,8 +16,8 @@ public class VrPlayerController : MonoBehaviour
 	public Renderer screen; //Assign a mesh to render on a 3d object
 	public RawImage canvasScreen; //Assign a Canvas RawImage to render on a GUI object
 
-	Texture2D _vlcTexture = null; //This is the texture libVLC writes to directly. It's private.
-	public RenderTexture texture = null; //We copy it into this texture which we actually use in unity.
+	public Texture2D _vlcTexture = null; //This is the texture libVLC writes to directly. It's private.
+	//public RenderTexture rt = null; //We copy it into this texture which we actually use in unity.
 
 
 	public string path = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"; //Can be a web path or a local path
@@ -31,7 +31,6 @@ public class VrPlayerController : MonoBehaviour
 
 	public bool logToConsole = false; //Log function calls and LibVLC logs to Unity console
 
-	private Camera _mainCamera;
 
 	public MediaManager mm = new();
 
@@ -46,7 +45,10 @@ public class VrPlayerController : MonoBehaviour
 
 		cachePath = Application.temporaryCachePath;
 
-		_mainCamera = Camera.main;
+		//- lock fps to 60 for heat and energy saving
+		QualitySettings.vSyncCount = 0;
+		Application.targetFrameRate = 60;
+
 		Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
 		if (!Api.HasDeviceParams())	Api.ScanDeviceParams();	
@@ -80,8 +82,12 @@ public class VrPlayerController : MonoBehaviour
 	{
 		mm.Dispose();
 
-		//Dispose of mediaPlayer, or it will stay in nemory and keep playing audio
+		texCache.Clear();
+
+		//- Dispose of mediaPlayer, or it will stay in nemory and keep playing audio
 		DestroyMediaPlayer();
+
+		Resources.UnloadUnusedAssets();
 	}
 
 	void Update()
@@ -106,29 +112,31 @@ public class VrPlayerController : MonoBehaviour
 			//}
 		}
 
-
-		//Get size every frame
-		uint height = 0;
-		uint width = 0;
-		mediaPlayer.Size(0, ref width, ref height);
-
-		//Automatically resize output textures if size changes
-		if (_vlcTexture == null || _vlcTexture.width != width || _vlcTexture.height != height)
+		if (mediaPlayer != null)
 		{
-			ResizeOutputTextures(width, height);
-		}
+			//Get size every frame
+			uint height = 0;
+			uint width = 0;
+			mediaPlayer.Size(0, ref width, ref height);
 
-		if (_vlcTexture != null)
-		{
-			//Update the vlc texture (tex)
-			var texptr = mediaPlayer.GetTexture(width, height, out bool updated);
-			if (updated)
+			//Automatically resize output textures if size changes
+			if (_vlcTexture == null || _vlcTexture.width != width || _vlcTexture.height != height)
 			{
-				_vlcTexture.UpdateExternalTexture(texptr);
+				ResizeOutputTextures(width, height);
+			}
 
-				//Copy the vlc texture into the output texture, flipped over
-				var flip = new Vector2(flipTextureX ? -1 : 1, flipTextureY ? -1 : 1);
-				Graphics.Blit(_vlcTexture, texture, flip, Vector2.zero); //If you wanted to do post processing outside of VLC you could use a shader here.
+			if (_vlcTexture != null)
+			{
+				//Update the vlc texture(tex)
+				var texptr = mediaPlayer.GetTexture(width, height, out bool updated);
+				if (updated)
+				{
+					_vlcTexture.UpdateExternalTexture(texptr);
+
+					//Copy the vlc texture into the output texture, flipped over
+					//var flip = new Vector2(flipTextureX ? -1 : 1, flipTextureY ? -1 : 1);
+					//Graphics.Blit(_vlcTexture, rt, flip, Vector2.zero); //If you wanted to do post processing outside of VLC you could use a shader here.
+				}
 			}
 		}
 
@@ -171,21 +179,29 @@ public class VrPlayerController : MonoBehaviour
 
 	public void Open()
 	{
-		Log("VLCPlayerExample Open");
-		if (mediaPlayer.Media != null)
-			mediaPlayer.Media.Dispose();
+		try
+		{
+			Log("VLCPlayerExample Open");
+			if (mediaPlayer.Media != null)
+				mediaPlayer.Media.Dispose();
 
-		var trimmedPath = path.Trim(new char[] { '"' });//Windows likes to copy paths with quotes but Uri does not like to open them
-		mediaPlayer.Media = new Media(new Uri(trimmedPath));
+			var trimmedPath = path.Trim(new char[] { '"' });//Windows likes to copy paths with quotes but Uri does not like to open them
+			mediaPlayer.Media = new Media(new Uri(trimmedPath));
 
-		Log($"VLCPlayerExample Media {mediaPlayer.Media.Mrl}");
+			Log($"VLCPlayerExample Media {mediaPlayer.Media.Mrl}");
 
-		Play();
+			Play();
+		}
+		catch (Exception ex)
+		{
+			Debug.LogError($"[YAVR]: Cant open <{mediaPlayer.Media.Mrl}> : " + ex.Message);
+		}
 	}
 
 	public void Open(Media media)
 	{
 		Log($"VLCPlayerExample Open <{media.Mrl}>");
+		CreateLibVLC();
 		if (mediaPlayer.Media != null)
 			mediaPlayer.Media.Dispose();
 		mediaPlayer.Media = media;
@@ -209,10 +225,11 @@ public class VrPlayerController : MonoBehaviour
 	{
 		Log("VLCPlayerExample Stop");
 		mediaPlayer?.Stop();
-
 		_vlcTexture = null;
-		texture = null;
+		//rt = null;
 		RenderSettings.skybox.mainTexture = Texture2D.blackTexture;
+
+
 	}
 
 	public void Seek(long timeDelta)
@@ -376,6 +393,7 @@ public class VrPlayerController : MonoBehaviour
 		mediaPlayer.FileCaching = 500;
 		mediaPlayer.NetworkCaching = 500;
 
+		Resources.UnloadUnusedAssets();
 	}
 
 	//Dispose of the MediaPlayer object. 
@@ -386,6 +404,9 @@ public class VrPlayerController : MonoBehaviour
 		mediaPlayer?.Dispose();
 		mediaPlayer = null;
 	}
+
+	private Dictionary<string, Texture2D> texCache = new();
+	//private Dictionary<string, RenderTexture> rtCache = new();
 
 	//Resize the output textures to the size of the video
 	void ResizeOutputTextures(uint px, uint py)
@@ -401,15 +422,57 @@ public class VrPlayerController : MonoBehaviour
 				py = swap;
 			}
 
-			_vlcTexture = Texture2D.CreateExternalTexture((int)px, (int)py, TextureFormat.RGBA32, false, true, texptr); //Make a texture of the proper size for the video to output to
-			texture = new RenderTexture(_vlcTexture.width, _vlcTexture.height, 0, RenderTextureFormat.ARGB32); //Make a renderTexture the same size as vlctex
+			var rtID = $"{px}x{py}";
+
+
+			if (texCache.ContainsKey(rtID))
+			{
+				_vlcTexture = texCache[rtID];
+			}
+			else
+			{
+				_vlcTexture = Texture2D.CreateExternalTexture((int)px, (int)py, TextureFormat.RGBA32, false, true, texptr);
+				_vlcTexture.name = rtID;
+
+				//- cache - because better, when recreate for every file (GC and UnloadUnusedAssets() work strange on Android)
+				texCache.TryAdd(rtID, _vlcTexture);
+				Debug.Log($"Cache External Tex {rtID}");
+			}
+
+
+			//Make a texture of the proper size for the video to output to
+
+			//- destroy old RenderTexture
+			//if (rt != null)
+			//{
+			//	RenderSettings.skybox.mainTexture = null;
+			//	rt.Release();
+			//	rt.DiscardContents();
+			//	RenderTexture.ReleaseTemporary(rt);
+			//	DestroyImmediate(rt);
+			//}
+
+			//if (rtCache.ContainsKey(rtID))
+			//{
+			//	rt = rtCache[rtID];
+			//}
+			//else
+			//{
+			//	rt = new RenderTexture(_vlcTexture.width, _vlcTexture.height, 0, RenderTextureFormat.ARGB32); //Make a renderTexture the same size as vlctex
+			//	rt.name = rtID;
+			//	rtCache.TryAdd(rtID, rt);
+			//	Debug.Log($"Cache RT {rtID}");
+			//}
+
+			//- force destroy old RenderTexture, or it stay in memory for long time
+			Resources.UnloadUnusedAssets();
 
 			if (screen != null)
-				screen.material.mainTexture = texture;
+				screen.material.mainTexture = _vlcTexture;
 			if (canvasScreen != null)
-				canvasScreen.texture = texture;
+				canvasScreen.texture = _vlcTexture;
 
-			RenderSettings.skybox.mainTexture = texture;
+			RenderSettings.skybox.mainTexture = _vlcTexture;
 		}
 	}
 
