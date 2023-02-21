@@ -390,6 +390,11 @@ public class VrPlayerController : MonoBehaviour
 		//- for buffering indication
 		mediaPlayer.Buffering += (s, e) => { isBuffering = true; };
 
+		mediaPlayer.EncounteredError += (s, e) => {
+			Debug.LogError("" + e.ToString());
+		};
+
+
 		mediaPlayer.FileCaching = 500;
 		mediaPlayer.NetworkCaching = 500;
 
@@ -414,6 +419,7 @@ public class VrPlayerController : MonoBehaviour
 		var texptr = mediaPlayer.GetTexture(px, py, out bool updated);
 		if (px != 0 && py != 0 && updated && texptr != IntPtr.Zero)
 		{
+
 			//If the currently playing video uses the Bottom Right orientation, we have to do this to avoid stretching it.
 			if (GetVideoOrientation() == VideoOrientation.BottomRight)
 			{

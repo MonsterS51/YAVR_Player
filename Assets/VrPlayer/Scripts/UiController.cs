@@ -33,6 +33,7 @@ public class UiController : MonoBehaviour
 	public Slider progressBar;
 	public GameObject currentTime;
 	public GameObject totalTime;
+	public GameObject mediaInfo;
 
 
 	//- Files List Panel
@@ -43,6 +44,7 @@ public class UiController : MonoBehaviour
 	public GameObject filesListContent;
 	public GameObject fileButtonPrefab;
 	public GameObject contentScrollBar;
+	public ScrollRect scrollRectGo;
 	public GameObject textParse;
 	public GameObject textBuffering;
 	public GameObject textFPS;
@@ -58,6 +60,8 @@ public class UiController : MonoBehaviour
 	//- fps
 	[SerializeField] private float _fpsRefreshRate = 0.5f;
 	private float _fpsTimer;
+
+	private string mediaInfoStr = string.Empty;
 
 	void Awake() { }
 
@@ -119,6 +123,17 @@ public class UiController : MonoBehaviour
 		InvokeRepeating(nameof(UiUpdate), 0f, 1f);
 	}
 
+	private void UpdateMediaInfo()
+	{
+		mediaInfoStr = string.Empty;
+		var vt = vpCon.mediaPlayer.SelectedTrack(LibVLCSharp.TrackType.Video);
+		if (vt != null)
+		{
+			mediaInfoStr += $"{vt.Data.Video.Width}x{vt.Data.Video.Height}";
+			if (vt.Data.Video.FrameRateNum > 0 && vt.Data.Video.FrameRateNum < 500) mediaInfoStr += $" {vt.Data.Video.FrameRateNum}fps";
+		}
+	}
+
 	// Update is called once per frame
 	void Update()
 	{
@@ -159,6 +174,7 @@ public class UiController : MonoBehaviour
 			if (!_isDraggingSeekBar && vpCon?.mediaPlayer != null && vpCon.mediaPlayer.IsPlaying)
 			{
 				progressBar.value = (float)vpCon.mediaPlayer.Position;
+				UpdateMediaInfo();
 				UpdateMediaTime();
 			}
 
@@ -193,6 +209,9 @@ public class UiController : MonoBehaviour
 				}
 			}
 
+
+
+
 		}
 	}
 
@@ -210,8 +229,8 @@ public class UiController : MonoBehaviour
 
 	private void Stop()
 	{
-		vpCon.Stop(); 
-		progressBar.value = 0; 
+		vpCon.Stop();
+		progressBar.value = 0;
 		ClearMediaTime();
 	}
 
@@ -234,6 +253,7 @@ public class UiController : MonoBehaviour
 			RefreshContent();
 		}
 	}
+
 
 	private void OpenMediaFile(MediaItem mi)
 	{
@@ -262,7 +282,7 @@ public class UiController : MonoBehaviour
 		}
 		catch (Exception ex)
 		{
-			Debug.LogError("Failed Clear Thumbnails Cache : " + ex.Message);
+			Debug.LogError("[YAVR] Failed Clear Thumbnails Cache : " + ex.Message);
 		}
 
 	}
@@ -310,12 +330,17 @@ public class UiController : MonoBehaviour
 
 		var curTime = vpCon.mediaPlayer.Time;
 		currentTime.GetComponent<TextMeshProUGUI>().SetText(GetFormatedTimeStr(curTime));
+
+		mediaInfo.GetComponent<TextMeshProUGUI>().SetText(mediaInfoStr);
+
+
 	}
 
 	public void ClearMediaTime()
 	{
 		totalTime.GetComponent<TextMeshProUGUI>().SetText("00:00");
 		currentTime.GetComponent<TextMeshProUGUI>().SetText("00:00");
+		mediaInfo.GetComponent<TextMeshProUGUI>().SetText(string.Empty);
 	}
 
 	public string GetFormatedTimeStr(long timeMs)
@@ -357,6 +382,8 @@ public class UiController : MonoBehaviour
 			}
 			entBtn.transform.SetParent(filesListContent.transform, false);
 		}
+
+		if (curFolderMI != null) StartCoroutine(SetLastScrollPosCoroutine());
 	}
 
 	///<summary> Update the preview texture on the file button. </summary>
@@ -426,16 +453,30 @@ public class UiController : MonoBehaviour
 	private void OpenFolder(MediaItem mi)
 	{
 		Debug.Log($"[YAVR] {nameof(OpenFolder)} : {mi.name}");
+
 		curFolderMI?.CancelParseChildMedia();
+
+		//- remember last scroll pos
+		if (curFolderMI != null)
+			curFolderMI.lastScrollPos = contentScrollBar.GetComponent<Scrollbar>().value;
+
 		curFolderMI = mi;
+
 		StartCoroutine(OpenFolderCoroutine(mi));
+	}
+
+	///<summary> Magic coroutine to set scroll position. </summary>
+	IEnumerator SetLastScrollPosCoroutine()
+	{
+		yield return new WaitForEndOfFrame();
+		if (curFolderMI == null) scrollRectGo.verticalNormalizedPosition = 1f;
+		scrollRectGo.verticalNormalizedPosition = curFolderMI.lastScrollPos; 
 	}
 
 	private IEnumerator OpenFolderCoroutine(MediaItem mi)
 	{
 		ClearFilesContentPanel();
 		currentFolderTitle.GetComponent<TextMeshProUGUI>().text = mi.name;
-		contentScrollBar.GetComponent<Scrollbar>().value = 1;
 
 		var parseTask = mi.StartParse();
 		while (parseTask.Status == TaskStatus.Running ||
@@ -445,15 +486,16 @@ public class UiController : MonoBehaviour
 			)
 			yield return new WaitForSeconds(.1f);
 
-		//- start parse all sub items
-		mi.StartParseChildMedia();
+		//- start parse all sub items - but for what? 
+		//mi.StartParseChildMedia();
 
 		RefillFilesPanel();
 		UiUpdate();
 	}
 
 
-	private void RefreshContent()
+
+private void RefreshContent()
 	{
 		Debug.Log($"[YAVR]: {nameof(RefreshContent)}");
 
@@ -484,7 +526,7 @@ public class UiController : MonoBehaviour
 			)
 			yield return new WaitForSeconds(.1f);
 
-		//- start parse all sub items
+		//- start parse all sub items - only for thumbnail
 		mi.StartParseChildMedia(true);
 
 		RefillFilesPanel();

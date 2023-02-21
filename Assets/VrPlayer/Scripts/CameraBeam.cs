@@ -1,4 +1,3 @@
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class CameraBeam : MonoBehaviour
@@ -32,8 +31,6 @@ public class CameraBeam : MonoBehaviour
 
 		try
 		{
-			if (_targetObject.IsDestroyed()) _targetObject = null;
-
 
 			//if (Physics.Raycast(transform.position, transform.forward, out var hit, _maxDist, worldLayer))
 			//{

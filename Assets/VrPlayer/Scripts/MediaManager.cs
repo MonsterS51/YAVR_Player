@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using LibVLCSharp;
 using UnityEngine;
 
@@ -41,9 +40,6 @@ public class MediaManager
 			newMI.name = drive.Name;
 			newMI.isFolder = true;
 			newMI.isNetwork = false;
-
-			//var task = newMI.StartParse();
-			//task.Wait();
 			rootItems.Add(newMI);
 		}
 		return rootItems;
@@ -72,9 +68,6 @@ public class MediaManager
 			newMI.name = dir;
 			newMI.isFolder = true;
 			newMI.isNetwork = false;
-
-			//var task = newMI.StartParse();
-			//task.Wait();
 			rootItems.Add(newMI);
 		}
 		return rootItems;
@@ -91,8 +84,6 @@ public class MediaManager
 				var newMI = new MediaItem(media);
 				newMI.name = $"(LAN) {newMI.MediaName}";
 				newMI.isNetwork = true;
-				//var task = newMI.StartParse();
-				//task.Wait();
 				rootItems.Add(newMI);
 			}
 		}

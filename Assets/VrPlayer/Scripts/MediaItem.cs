@@ -16,6 +16,7 @@ public class MediaItem
 	public List<MediaItem> listSubMI = new();
 	public MediaItem parentMI = null;
 	private Texture2D thumbnail = null;
+	public float lastScrollPos = 1f;
 
 	public string MediaName { get { return media.Meta(MetadataType.Title); } }
 
@@ -172,21 +173,28 @@ public class MediaItem
 		cts?.Cancel();
 	}
 
+	public string mediaInfo = string.Empty;
+
 	public Task StartParse(bool updateThumbs = false)
 	{
 		var parseTask = Task.Factory.StartNew(() =>
 		{
 			try
 			{
-				var mode = isNetwork ? MediaParseOptions.ParseNetwork : MediaParseOptions.ParseLocal;
-
-				var task = media.ParseAsync(VrPlayerController.libVLC, mode, -1);
-				task.Wait();
-
-				if (!isFolder && updateThumbs && !IsThumbnailCached)
+				//BUG parsing of video file give no info about video tracks
+				if (isFolder)
 				{
-					var task2 = RunGenerateThumbnail();
-					task2.Wait();
+					var mode = isNetwork ? MediaParseOptions.ParseNetwork : MediaParseOptions.ParseLocal;
+					var task = media.ParseAsync(VrPlayerController.libVLC, mode);
+					task.Wait();
+				}
+				else
+				{
+					if (updateThumbs && !IsThumbnailCached)
+					{
+						var task2 = RunGenerateThumbnail();
+						task2.Wait();
+					}
 				}
 			}
 			catch (Exception e)
@@ -197,6 +205,7 @@ public class MediaItem
 
 		return parseTask;
 	}
+
 
 	#endregion
 
@@ -229,12 +238,15 @@ public class MediaItem
 		//- calc aspect for thumbnail
 		uint w = 2;
 		uint h = 1;
+
+		//BUG TrackList always empty
 		var firstVideoTrack = media.TrackList(TrackType.Video).FirstOrDefault();
 		if (firstVideoTrack != null)
 		{
 			w = firstVideoTrack.Data.Video.Width;
 			h = firstVideoTrack.Data.Video.Height;
 		}
+
 		var aspect = w / (float)h;
 		w = 250;
 		h = (uint)(w / aspect);
