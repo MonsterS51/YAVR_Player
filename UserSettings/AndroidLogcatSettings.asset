@@ -1,9 +1,9 @@
 {
     "m_SelectedDeviceId": "65a155e1",
     "m_SelectedPackage": {
-        "deviceId": "",
-        "name": "",
-        "processId": 0,
+        "deviceId": "65a155e1",
+        "name": "com.MonsterNest.YAVRPlayer",
+        "processId": 2669,
         "exited": false
     },
     "m_SelectedPriority": 0,
@@ -29,12 +29,6 @@
         {
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 16692,
-            "exited": true
-        },
-        {
-            "deviceId": "65a155e1",
-            "name": "com.MonsterNest.YAVRPlayer",
             "processId": 17465,
             "exited": true
         },
@@ -49,6 +43,18 @@
             "name": "com.MonsterNest.YAVRPlayer",
             "processId": 25238,
             "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 1046,
+            "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 2669,
+            "exited": false
         }
     ],
     "m_Tags": {

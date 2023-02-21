@@ -109,9 +109,8 @@ public class MediaItem
 	}
 
 	///<summary> Recreate Media object to run parse again. </summary>
-	public void ReparseMedia()
+	public Task ReparseMedia()
 	{
-
 		var uri = new Uri(media.Mrl);
 		var newMedia = new Media(uri);
 		if (newMedia != null)
@@ -121,8 +120,9 @@ public class MediaItem
 			listSubMI.Clear();
 			SetMediaEvents(media);
 			var task = StartParse();
-			task.Wait();
+			return task;
 		}
+		return Task.CompletedTask;
 	}
 
 	//---
@@ -132,7 +132,7 @@ public class MediaItem
 	private CancellationTokenSource cts;
 	public bool parseChildInProgerss = false;
 
-	public void StartParseChildMedia()
+	public void StartParseChildMedia(bool updateThumbs = false)
 	{
 		if (parseChildInProgerss) return;
 		parseChildInProgerss = true;
@@ -151,7 +151,7 @@ public class MediaItem
 					if (ct.IsCancellationRequested) return;
 					if (!subMI.isFolder)
 					{
-						var subTask = subMI.StartParse();
+						var subTask = subMI.StartParse(updateThumbs);
 						subTask.Wait();
 					}
 				}
@@ -172,7 +172,7 @@ public class MediaItem
 		cts?.Cancel();
 	}
 
-	public Task StartParse()
+	public Task StartParse(bool updateThumbs = false)
 	{
 		var parseTask = Task.Factory.StartNew(() =>
 		{
@@ -183,13 +183,10 @@ public class MediaItem
 				var task = media.ParseAsync(VrPlayerController.libVLC, mode, -1);
 				task.Wait();
 
-				if (!isFolder)
+				if (!isFolder && updateThumbs && !IsThumbnailCached)
 				{
-					if (!IsThumbnailCached)
-					{
-						var task2 = RunGenerateThumbnail();
-						task2.Wait();
-					}
+					var task2 = RunGenerateThumbnail();
+					task2.Wait();
 				}
 			}
 			catch (Exception e)
