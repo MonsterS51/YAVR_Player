@@ -35,7 +35,7 @@ public class UiController : MonoBehaviour
 	public GameObject currentTime;
 	public GameObject totalTime;
 	public GameObject mediaInfo;
-
+	public GameObject msgText;
 
 	//- Files List Panel
 	public GameObject fileCanvas;
@@ -79,12 +79,12 @@ public class UiController : MonoBehaviour
 		seekPrevButton.GetComponent<Button>().onClick.AddListener(() =>
 		{
 			Vibration.Vibrate(vibratorTime);
-			vpCon.Seek(-10000); 
+			vpCon.Seek(-10000);
 		});
 		seekForwardButton.GetComponent<Button>().onClick.AddListener(() =>
 		{
 			Vibration.Vibrate(vibratorTime);
-			vpCon.Seek(10000); 
+			vpCon.Seek(10000);
 		});
 
 		nextFileButton.GetComponent<Button>().onClick.AddListener(() => { PlayNextFile(); });
@@ -112,11 +112,6 @@ public class UiController : MonoBehaviour
 		BtnOU.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetVideoLayout(false); });
 		Btn180.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetImageType(false); });
 		Btn360.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetImageType(true); });
-
-
-		currentFolderTitle.GetComponent<TextMeshProUGUI>().text = "Root";
-		UpdateTitle();
-		RefreshContent();
 
 		//- progressBar events config
 		var seekBarEvents = progressBar.GetComponent<EventTrigger>();
@@ -213,7 +208,7 @@ public class UiController : MonoBehaviour
 			}
 
 			//- parse indication
-			if (curFolderMI != null && curFolderMI.parseChildInProgerss)
+			if (curFolderMI != null && curFolderMI.parseChildInProgress)
 				textParse.SetActive(true);
 			else
 				textParse.SetActive(false);
@@ -229,28 +224,33 @@ public class UiController : MonoBehaviour
 
 
 			//- update thumbnails in buttons
-			if (curFolderMI != null)
+			if (curFolderMI != null && !curFolderMI.parseInProgress)
 			{
-				var fileBtns = filesListContent.GetComponentsInChildren<Button>(true);
-				foreach (var subMi in curFolderMI.listSubMI)
+				try
 				{
-					if (subMi.isFolder) continue;
-					var fileBtn = fileBtns.FirstOrDefault(x => x.name == subMi.name);
-					if (fileBtn == null) continue;
-					
-					UpdateFileButtonThumbnail(fileBtn.gameObject, subMi.GetThumbnailFromCache());
-					UpdateFileButtonInfoLine(fileBtn.gameObject, subMi);
-
-
-					if (vpCon.mediaPlayer != null && vpCon.mediaPlayer.Media != null)
+					var fileBtns = filesListContent.GetComponentsInChildren<Button>(true);
+					foreach (var subMi in curFolderMI.listSubMI)
 					{
-						var firstLine = fileBtn.transform.Find("FirstLineText")?.GetComponentInChildren<TextMeshProUGUI>();
-						if (firstLine != null) {
-							if (vpCon.mediaPlayer.Media.Mrl == subMi.media.Mrl) firstLine.color = Color.cyan; 
-							else firstLine.color = Color.white;
+						if (subMi.isFolder) continue;
+						var fileBtn = fileBtns.FirstOrDefault(x => x.name == subMi.name);
+						if (fileBtn == null) continue;
+
+						UpdateFileButtonThumbnail(fileBtn.gameObject, subMi.GetThumbnailFromCache());
+						UpdateFileButtonInfoLine(fileBtn.gameObject, subMi);
+
+
+						if (vpCon.mediaPlayer != null && vpCon.mediaPlayer.Media != null)
+						{
+							var firstLine = fileBtn.transform.Find("FirstLineText")?.GetComponentInChildren<TextMeshProUGUI>();
+							if (firstLine != null)
+							{
+								if (vpCon.mediaPlayer.Media.Mrl.ToLower() == subMi.media.Mrl.ToLower()) firstLine.color = Color.cyan;
+								else firstLine.color = Color.white;
+							}
 						}
 					}
 				}
+				catch (Exception) { }
 			}
 
 
@@ -347,7 +347,7 @@ public class UiController : MonoBehaviour
 		var curMrl = vpCon?.mediaPlayer?.Media?.Mrl;
 		if (string.IsNullOrWhiteSpace(curMrl)) return;
 
-		var curMi = curFolderMI.listSubMI.FirstOrDefault(x => x.media.Mrl == curMrl);
+		var curMi = curFolderMI.listSubMI.FirstOrDefault(x => x.media.Mrl.ToLower() == curMrl.ToLower());
 		if (curMi == null) return;
 
 		var curInd = curFolderMI.listSubMI.IndexOf(curMi);
@@ -405,21 +405,24 @@ public class UiController : MonoBehaviour
 			var media = new Media(new Uri(vpCon.sd.LastFile));
 			vpCon.mediaPlayer.Media = media;
 			media.Dispose();
-			UpdateTitle();
 		}
 
-		StartCoroutine(SetLastFileCoroutine());
+		UpdateTitle();
 
+		StartCoroutine(SetLastFolderCoroutine());
 	}
 
-	private IEnumerator SetLastFileCoroutine()
+	private IEnumerator SetLastFolderCoroutine()
 	{
+		fileCanvas.SetActive(false);
+
 		Debug.Log("Try Set LastFolder: " + vpCon.sd.LastFolder);
 		if (!string.IsNullOrWhiteSpace(vpCon?.sd?.LastFolder))
 		{
+
 			var folderUri = new Uri(vpCon.sd.LastFolder);
-			Debug.Log($"LastFolder Host: {folderUri.Host}");
-			Debug.Log($"LastFolder Segs: {string.Join(",\n", folderUri.Segments)}");
+			//Debug.Log($"LastFolder Host: {folderUri.Host}");
+			//Debug.Log($"LastFolder Segs: {string.Join(",\n", folderUri.Segments)}");
 
 			var uriSegments = new List<string>();
 			if (!string.IsNullOrWhiteSpace(folderUri.Host)) uriSegments.Add(folderUri.Host);
@@ -429,13 +432,20 @@ public class UiController : MonoBehaviour
 			foreach (var uriSeg in uriSegments)
 			{
 				var curFolder = uriSeg;
-				Debug.Log($" > Uri Segment: {curFolder}");
+				//Debug.Log($" > Uri Segment: {curFolder}");
 				if (string.IsNullOrWhiteSpace(curFolder.Trim('\\', '/'))) continue;
+
+				SetMessageText($"Try Open: {curFolder}");
 
 				if (curFolderMI != null)
 				{
 					var task = curFolderMI.StartParse(false);
-					task.Wait();
+					while (task.Status == TaskStatus.Running ||
+						task.Status == TaskStatus.Created ||
+						task.Status == TaskStatus.WaitingToRun ||
+						task.Status == TaskStatus.WaitingForActivation
+						)
+						yield return new WaitForSeconds(.1f);
 				}
 
 				List<MediaItem> miList;
@@ -455,10 +465,10 @@ public class UiController : MonoBehaviour
 				else
 				{
 					miList = curFolderMI.listSubMI;
-					curFolder = curFolder.TrimEnd('\\', '/');   //- Non root folders without trailing '/'
+					curFolder = curFolder.TrimEnd('\\', '/');	//- Non root folders without trailing '/'
 				}
 
-				Debug.Log($"   >>> Subs MI: {string.Join("\n", miList.Select(x => x.media.Mrl))}");
+				//Debug.Log($"   >>> Subs MI: {string.Join("\n", miList.Select(x => x.media.Mrl))}");
 
 				var nextFolder = miList.FirstOrDefault(x => x.media.Mrl.ToLower().EndsWith(curFolder.ToLower()));
 				if (nextFolder == null) break;
@@ -468,12 +478,31 @@ public class UiController : MonoBehaviour
 			}
 
 			if (curFolderMI != null) StartCoroutine(OpenFolderCoroutine(curFolderMI));
+
 		}
+		else
+		{
+			currentFolderTitle.GetComponent<TextMeshProUGUI>().text = "Root";
+			RefreshContent();
+		}
+
+		SetMessageText(string.Empty);
+
+		fileCanvas.SetActive(true);
 	}
+
+	public void SetMessageText(string text)
+	{
+		var tmp = msgText.GetComponentInChildren<TextMeshProUGUI>();
+		if (tmp != null) tmp.text = text;
+		if (string.IsNullOrWhiteSpace(text)) msgText.SetActive(false);
+		else msgText.SetActive(true);
+	}
+
 
 	//---
 
-		#region Files Panel Content
+	#region Files Panel Content
 
 	private MediaItem curFolderMI = null;
 
@@ -518,7 +547,10 @@ public class UiController : MonoBehaviour
 		var thumbImage = go.transform.Find("Thumbnail");
 		thumbImage.gameObject.SetActive(true);
 		var rawImage = thumbImage?.GetComponent<RawImage>();
-		if (rawImage != null) rawImage.texture = thumbTex;
+		if (rawImage != null && rawImage.texture != thumbTex)
+		{
+			rawImage.texture = thumbTex;
+		}
 
 	}
 
@@ -571,7 +603,7 @@ public class UiController : MonoBehaviour
 
 		return newButton;
 	}
-	
+
 
 	#endregion
 
@@ -608,6 +640,7 @@ public class UiController : MonoBehaviour
 
 	private IEnumerator OpenFolderCoroutine(MediaItem mi)
 	{
+		SetMessageText($"Open Folder: {mi.name}");
 		ClearFilesContentPanel();
 		currentFolderTitle.GetComponent<TextMeshProUGUI>().text = mi.name;
 
@@ -624,6 +657,7 @@ public class UiController : MonoBehaviour
 
 		RefillFilesPanel();
 		UiUpdate();
+		SetMessageText(string.Empty);
 	}
 
 

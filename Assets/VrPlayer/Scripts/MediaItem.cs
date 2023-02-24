@@ -108,7 +108,8 @@ public class MediaItem
 			}
 		}
 
-		media.ParsedChanged += (x, e) => {
+		media.ParsedChanged += (x, e) =>
+		{
 			if (!isFolder) UpdateMediaInfoStr();
 		};
 
@@ -137,12 +138,13 @@ public class MediaItem
 	#region Parse Tasks
 
 	private CancellationTokenSource cts;
-	public bool parseChildInProgerss = false;
+	public bool parseInProgress = false;
+	public bool parseChildInProgress = false;
 
 	public void StartParseChildMedia(bool updateThumbs = false)
 	{
-		if (parseChildInProgerss) return;
-		parseChildInProgerss = true;
+		if (parseChildInProgress) return;
+		parseChildInProgress = true;
 
 		//- parse media one by one for easy cancel
 
@@ -168,7 +170,7 @@ public class MediaItem
 			{
 				cts.Dispose();
 				cts = null;
-				parseChildInProgerss = false;
+				parseChildInProgress = false;
 			}
 		});
 	}
@@ -182,25 +184,31 @@ public class MediaItem
 
 	public Task StartParse(bool updateThumbs = false)
 	{
-		var parseTask = Task.Factory.StartNew(() =>
-		{
-			try
-			{
-				var mode = isNetwork ? MediaParseOptions.ParseNetwork : MediaParseOptions.ParseLocal;
-				var task = media.ParseAsync(VrPlayerController.libVLC, mode);
-				task.Wait();
+		if (parseInProgress) return Task.CompletedTask;
+		parseInProgress = true;
 
-				if (!isFolder && updateThumbs && !IsThumbnailCached)
-				{
-					var task2 = RunGenerateThumbnail();
-					task2.Wait();
-				}
-			}
-			catch (Exception e)
+		var parseTask = Task.Factory.StartNew(() =>
 			{
-				Debug.Log($"StartParse : {e.Message}");
-			}
-		});
+				try
+				{
+					var mode = isNetwork ? MediaParseOptions.ParseNetwork : MediaParseOptions.ParseLocal;
+
+					var task = media.ParseAsync(VrPlayerController.libVLC, mode);
+					task.Wait();
+
+					if (!isFolder && updateThumbs && !IsThumbnailCached)
+					{
+						var task2 = RunGenerateThumbnail();
+						task2.Wait();
+					}
+				}
+				catch (Exception e)
+				{
+					Debug.Log($"StartParse : {e.Message}");
+				}
+			});
+
+		parseInProgress = false;
 
 		return parseTask;
 	}
@@ -214,7 +222,7 @@ public class MediaItem
 		var modDate = refPoint.AddSeconds(mTime);
 		var dur = VrPlayerController.GetFormatedTimeStr(media.Duration);
 		var size = (fSize / 1024) / 1024;
-		var sizeStr = fSize < 1024 ? $"{size} Mb" : $"{String.Format("{0:0.00}", size / 1024f)} Gb";
+		var sizeStr = size < 1024 ? $"{size} Mb" : $"{String.Format("{0:0.00}", size / 1024f)} Gb";
 		mediaInfo = $"<{dur}>  <{sizeStr}>  <{modDate}>";
 	}
 
@@ -274,7 +282,7 @@ public class MediaItem
 	private static string GetThumbnailCachePath(Media media)
 	{
 		Directory.CreateDirectory(thumbsCachePath);
-		var hash = media.Mrl.GetHashCode();
+		var hash = media.Mrl.ToLower().GetHashCode();
 		var path = VrPlayerController.cachePath + $"/thumbs/{hash}";
 		return path;
 	}

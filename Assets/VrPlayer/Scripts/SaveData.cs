@@ -9,6 +9,10 @@ public class SaveData
 	public string LastFolder { get; set; } = string.Empty;
 	public string LastFile { get; set; } = string.Empty;
 
+	public string NetLogin { get; set; } = string.Empty;
+	public string NetPass { get; set; } = string.Empty;
+
+
 	//TODO скролл последней папки
 
 	//TODO FOV камеры

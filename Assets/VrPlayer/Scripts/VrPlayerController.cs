@@ -148,12 +148,18 @@ public class VrPlayerController : MonoBehaviour
 
 	void OnApplicationFocus(bool hasFocus)
 	{
-		if (!hasFocus) mediaPlayer?.SetPause(true);
+		if (!hasFocus) { 
+			mediaPlayer?.SetPause(true); 
+			SaveData();
+		}
 	}
 
 	void OnApplicationPause(bool pauseStatus)
 	{
-		if (pauseStatus) mediaPlayer?.SetPause(true);
+		if (pauseStatus) { 
+			mediaPlayer?.SetPause(true);
+			SaveData();
+		}
 	}
 
 	#endregion
@@ -354,8 +360,9 @@ public class VrPlayerController : MonoBehaviour
 		}
 
 		Core.Initialize(Application.dataPath); //Load VLC dlls
-		libVLC = new LibVLC(enableDebugLogs: true, "--smb-user=Android", "--smb-pwd=", "--input-repeat=9999");
+		libVLC = new LibVLC(enableDebugLogs: true, $"--smb-user={sd.NetLogin}", $"--smb-pwd={sd.NetPass}", "--input-repeat=9999");
 		//You can customize LibVLC with advanced CLI options here https://wiki.videolan.org/VLC_command-line_help/
+
 
 		//Setup Error Logging
 		Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
