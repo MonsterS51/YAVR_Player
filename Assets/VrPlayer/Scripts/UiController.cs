@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Google.XR.Cardboard;
+using LibVLCSharp;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -67,21 +68,34 @@ public class UiController : MonoBehaviour
 
 	private bool _isDraggingSeekBar;
 
+	private long vibratorTime = 30;
+
 	// Start is called before the first frame update
 	void Start()
 	{
 
 		playButton.GetComponent<Button>().onClick.AddListener(() => PlayPauseBtnPush());
 		stopButton.GetComponent<Button>().onClick.AddListener(() => { Stop(); });
-		seekPrevButton.GetComponent<Button>().onClick.AddListener(() => { vpCon.Seek(-10000); });
-		seekForwardButton.GetComponent<Button>().onClick.AddListener(() => { vpCon.Seek(10000); });
+		seekPrevButton.GetComponent<Button>().onClick.AddListener(() =>
+		{
+			Vibration.Vibrate(vibratorTime);
+			vpCon.Seek(-10000); 
+		});
+		seekForwardButton.GetComponent<Button>().onClick.AddListener(() =>
+		{
+			Vibration.Vibrate(vibratorTime);
+			vpCon.Seek(10000); 
+		});
 
 		nextFileButton.GetComponent<Button>().onClick.AddListener(() => { PlayNextFile(); });
 		prevFileButton.GetComponent<Button>().onClick.AddListener(() => { PlayNextFile(true); });
 
+		refreshButton.GetComponent<Button>().onClick.AddListener(() =>
+		{
+			Vibration.Vibrate(vibratorTime);
+			RefreshContent();
+		});
 
-
-		refreshButton.GetComponent<Button>().onClick.AddListener(() => { RefreshContent(); });
 		upButton.GetComponent<Button>().onClick.AddListener(() => { GoUp(); });
 
 		fileCanvas.transform.LookAt(Camera.main.transform);
@@ -108,7 +122,11 @@ public class UiController : MonoBehaviour
 		var seekBarEvents = progressBar.GetComponent<EventTrigger>();
 		EventTrigger.Entry seekBarPointerDown = new();
 		seekBarPointerDown.eventID = EventTriggerType.PointerDown;
-		seekBarPointerDown.callback.AddListener((data) => { _isDraggingSeekBar = true; });
+		seekBarPointerDown.callback.AddListener((data) =>
+		{
+			_isDraggingSeekBar = true;
+			Vibration.Vibrate(vibratorTime);
+		});
 		seekBarEvents.triggers.Add(seekBarPointerDown);
 
 		EventTrigger.Entry seekBarPointerUp = new();
@@ -119,6 +137,8 @@ public class UiController : MonoBehaviour
 			_isDraggingSeekBar = false;
 		});
 		seekBarEvents.triggers.Add(seekBarPointerUp);
+
+		TrySetLastState();
 
 		InvokeRepeating(nameof(UiUpdate), 0f, 1f);
 	}
@@ -140,13 +160,24 @@ public class UiController : MonoBehaviour
 		//- Gamepad media commands
 		if (Gamepad.current != null)
 		{
-			if (Gamepad.current[GamepadButton.Y].wasPressedThisFrame) uiRoot.SetActive(!uiRoot.activeInHierarchy);
+
+			if (Gamepad.current[GamepadButton.Select].wasPressedThisFrame) Application.Quit();
+			if (Gamepad.current[GamepadButton.Y].wasPressedThisFrame)
+			{
+				Vibration.Vibrate(vibratorTime);
+				uiRoot.SetActive(!uiRoot.activeInHierarchy);
+			}
 			if (Gamepad.current[GamepadButton.X].wasPressedThisFrame)
 			{
+				Vibration.Vibrate(vibratorTime);
 				if (vpCon.mediaPlayer.IsPlaying) vpCon.mediaPlayer.Pause();
 				else vpCon.Play();
 			}
-			if (Gamepad.current[GamepadButton.B].wasPressedThisFrame) Api.Recenter();
+			if (Gamepad.current[GamepadButton.B].wasPressedThisFrame)
+			{
+				Vibration.Vibrate(vibratorTime);
+				Api.Recenter();
+			}
 		}
 
 		if (uiRoot.activeInHierarchy && Time.unscaledTime > _fpsTimer)
@@ -168,6 +199,9 @@ public class UiController : MonoBehaviour
 
 	private void UiUpdate()
 	{
+
+
+
 		if (uiRoot.activeInHierarchy)
 		{
 
@@ -202,9 +236,19 @@ public class UiController : MonoBehaviour
 				{
 					if (subMi.isFolder) continue;
 					var fileBtn = fileBtns.FirstOrDefault(x => x.name == subMi.name);
-					if (fileBtn != null)
+					if (fileBtn == null) continue;
+					
+					UpdateFileButtonThumbnail(fileBtn.gameObject, subMi.GetThumbnailFromCache());
+					UpdateFileButtonInfoLine(fileBtn.gameObject, subMi);
+
+
+					if (vpCon.mediaPlayer != null && vpCon.mediaPlayer.Media != null)
 					{
-						UpdateFileButtonThumbnail(fileBtn.gameObject, subMi.GetThumbnailFromCache());
+						var firstLine = fileBtn.transform.Find("FirstLineText")?.GetComponentInChildren<TextMeshProUGUI>();
+						if (firstLine != null) {
+							if (vpCon.mediaPlayer.Media.Mrl == subMi.media.Mrl) firstLine.color = Color.cyan; 
+							else firstLine.color = Color.white;
+						}
 					}
 				}
 			}
@@ -218,6 +262,8 @@ public class UiController : MonoBehaviour
 
 	private void PlayPauseBtnPush()
 	{
+		Vibration.Vibrate(vibratorTime);
+
 		if (vpCon.mediaPlayer == null) return;
 		if (vpCon.mediaPlayer.IsPlaying)
 		{
@@ -229,6 +275,7 @@ public class UiController : MonoBehaviour
 
 	private void Stop()
 	{
+		Vibration.Vibrate(vibratorTime);
 		vpCon.Stop();
 		progressBar.value = 0;
 		ClearMediaTime();
@@ -242,6 +289,8 @@ public class UiController : MonoBehaviour
 
 	private void GoUp()
 	{
+		Vibration.Vibrate(vibratorTime);
+
 		if (curFolderMI != null && curFolderMI.parentMI != null)
 		{
 			OpenFolder(curFolderMI.parentMI);
@@ -257,6 +306,8 @@ public class UiController : MonoBehaviour
 
 	private void OpenMediaFile(MediaItem mi)
 	{
+		Vibration.Vibrate(vibratorTime);
+
 		//- auto detect VR video type by name
 		if (mi.name.Contains("360")) vpCon.SetImageType(true);
 		else vpCon.SetImageType(false);
@@ -264,6 +315,9 @@ public class UiController : MonoBehaviour
 		else vpCon.SetVideoLayout(true);
 
 		curFolderMI?.CancelParseChildMedia();
+
+		vpCon.sd.LastFile = mi.media.Mrl;
+
 		vpCon.Stop();
 		vpCon.Open(mi.media);
 		UpdateTitle();
@@ -326,10 +380,10 @@ public class UiController : MonoBehaviour
 	{
 		if (vpCon.mediaPlayer?.Media == null) return;
 		var totTime = vpCon.mediaPlayer.Media.Duration;
-		totalTime.GetComponent<TextMeshProUGUI>().SetText(GetFormatedTimeStr(totTime));
+		totalTime.GetComponent<TextMeshProUGUI>().SetText(VrPlayerController.GetFormatedTimeStr(totTime));
 
 		var curTime = vpCon.mediaPlayer.Time;
-		currentTime.GetComponent<TextMeshProUGUI>().SetText(GetFormatedTimeStr(curTime));
+		currentTime.GetComponent<TextMeshProUGUI>().SetText(VrPlayerController.GetFormatedTimeStr(curTime));
 
 		mediaInfo.GetComponent<TextMeshProUGUI>().SetText(mediaInfoStr);
 
@@ -343,20 +397,83 @@ public class UiController : MonoBehaviour
 		mediaInfo.GetComponent<TextMeshProUGUI>().SetText(string.Empty);
 	}
 
-	public string GetFormatedTimeStr(long timeMs)
+	public void TrySetLastState()
 	{
-		var timespan = TimeSpan.FromMilliseconds(timeMs);
-		var totalStr = string.Empty;
-		if (timespan.TotalHours >= 1)
-			totalStr = string.Format("{0:D2}:{1:D2}:{2:D2}", timespan.Hours, timespan.Minutes, timespan.Seconds);
-		else
-			totalStr = string.Format("{0}:{1:00}", (int)timespan.TotalMinutes, timespan.Seconds);
-		return totalStr;
+		Debug.Log("Try Set LastFile: " + vpCon.sd.LastFile);
+		if (!string.IsNullOrWhiteSpace(vpCon.sd?.LastFile) && vpCon.mediaPlayer?.Media == null)
+		{
+			var media = new Media(new Uri(vpCon.sd.LastFile));
+			vpCon.mediaPlayer.Media = media;
+			media.Dispose();
+			UpdateTitle();
+		}
+
+		StartCoroutine(SetLastFileCoroutine());
+
+	}
+
+	private IEnumerator SetLastFileCoroutine()
+	{
+		Debug.Log("Try Set LastFolder: " + vpCon.sd.LastFolder);
+		if (!string.IsNullOrWhiteSpace(vpCon?.sd?.LastFolder))
+		{
+			var folderUri = new Uri(vpCon.sd.LastFolder);
+			Debug.Log($"LastFolder Host: {folderUri.Host}");
+			Debug.Log($"LastFolder Segs: {string.Join(",\n", folderUri.Segments)}");
+
+			var uriSegments = new List<string>();
+			if (!string.IsNullOrWhiteSpace(folderUri.Host)) uriSegments.Add(folderUri.Host);
+			uriSegments.AddRange(folderUri.Segments);
+
+			bool isRoot = true;
+			foreach (var uriSeg in uriSegments)
+			{
+				var curFolder = uriSeg;
+				Debug.Log($" > Uri Segment: {curFolder}");
+				if (string.IsNullOrWhiteSpace(curFolder.Trim('\\', '/'))) continue;
+
+				if (curFolderMI != null)
+				{
+					var task = curFolderMI.StartParse(false);
+					task.Wait();
+				}
+
+				List<MediaItem> miList;
+				if (isRoot)
+				{
+					miList = vpCon.mm.GetRootMediaItems();
+
+					//- try wait lan folders
+					if (!folderUri.AbsolutePath.StartsWith("file") && !miList.Any(x => x.media.Mrl.ToLower().EndsWith(curFolder.ToLower())))
+					{
+						yield return new WaitForSeconds(1f);
+						miList = vpCon.mm.GetRootMediaItems();
+					}
+
+					isRoot = false;
+				}
+				else
+				{
+					miList = curFolderMI.listSubMI;
+					curFolder = curFolder.TrimEnd('\\', '/');   //- Non root folders without trailing '/'
+				}
+
+				Debug.Log($"   >>> Subs MI: {string.Join("\n", miList.Select(x => x.media.Mrl))}");
+
+				var nextFolder = miList.FirstOrDefault(x => x.media.Mrl.ToLower().EndsWith(curFolder.ToLower()));
+				if (nextFolder == null) break;
+
+				curFolderMI = nextFolder;
+
+			}
+
+			if (curFolderMI != null) StartCoroutine(OpenFolderCoroutine(curFolderMI));
+		}
 	}
 
 	//---
 
-	#region Files Panel Content
+		#region Files Panel Content
 
 	private MediaItem curFolderMI = null;
 
@@ -405,6 +522,14 @@ public class UiController : MonoBehaviour
 
 	}
 
+	///<summary> Update the preview texture on the file button. </summary>
+	private void UpdateFileButtonInfoLine(GameObject go, MediaItem mi)
+	{
+		if (string.IsNullOrWhiteSpace(mi.mediaInfo)) return;
+		var secondLine = go.transform.Find("SecondLineText")?.GetComponentInChildren<TextMeshProUGUI>();
+		if (secondLine != null && secondLine.text.Length <= 0) secondLine.text = mi.mediaInfo;
+	}
+
 	private void ClearFilesContentPanel()
 	{
 		var fileBtns = filesListContent.GetComponentsInChildren<Button>(true);
@@ -418,8 +543,11 @@ public class UiController : MonoBehaviour
 		var newButton = Instantiate(fileButtonPrefab);
 		newButton.name = mi.name;
 
-		var btnTextObj = newButton.GetComponentInChildren<TextMeshProUGUI>();
-		btnTextObj.text = mi.name;
+
+		var firstLine = newButton.transform.Find("FirstLineText")?.GetComponentInChildren<TextMeshProUGUI>();
+		if (firstLine != null) firstLine.text = mi.name;
+		var secondLine = newButton.transform.Find("SecondLineText")?.GetComponentInChildren<TextMeshProUGUI>();
+		if (secondLine != null) secondLine.text = mi.mediaInfo;
 
 		var btnComp = newButton.GetComponent<Button>();
 		btnComp.onClick.AddListener(() => action?.Invoke());
@@ -443,6 +571,7 @@ public class UiController : MonoBehaviour
 
 		return newButton;
 	}
+	
 
 	#endregion
 
@@ -454,6 +583,8 @@ public class UiController : MonoBehaviour
 	{
 		Debug.Log($"[YAVR] {nameof(OpenFolder)} : {mi.name}");
 
+		Vibration.Vibrate(vibratorTime);
+
 		curFolderMI?.CancelParseChildMedia();
 
 		//- remember last scroll pos
@@ -462,7 +593,9 @@ public class UiController : MonoBehaviour
 
 		curFolderMI = mi;
 
-		StartCoroutine(OpenFolderCoroutine(mi));
+		vpCon.sd.LastFolder = mi.media.Mrl;
+
+		if (mi != null) StartCoroutine(OpenFolderCoroutine(mi));
 	}
 
 	///<summary> Magic coroutine to set scroll position. </summary>
@@ -470,7 +603,7 @@ public class UiController : MonoBehaviour
 	{
 		yield return new WaitForEndOfFrame();
 		if (curFolderMI == null) scrollRectGo.verticalNormalizedPosition = 1f;
-		scrollRectGo.verticalNormalizedPosition = curFolderMI.lastScrollPos; 
+		scrollRectGo.verticalNormalizedPosition = curFolderMI.lastScrollPos;
 	}
 
 	private IEnumerator OpenFolderCoroutine(MediaItem mi)
@@ -486,8 +619,8 @@ public class UiController : MonoBehaviour
 			)
 			yield return new WaitForSeconds(.1f);
 
-		//- start parse all sub items - but for what? 
-		//mi.StartParseChildMedia();
+		//- start parse all sub items
+		mi.StartParseChildMedia(!mi.isNetwork);
 
 		RefillFilesPanel();
 		UiUpdate();
@@ -495,7 +628,7 @@ public class UiController : MonoBehaviour
 
 
 
-private void RefreshContent()
+	private void RefreshContent()
 	{
 		Debug.Log($"[YAVR]: {nameof(RefreshContent)}");
 

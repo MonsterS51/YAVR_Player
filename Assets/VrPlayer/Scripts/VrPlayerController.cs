@@ -1,6 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using Google.XR.Cardboard;
 using LibVLCSharp;
 using UnityEngine;
@@ -17,7 +17,7 @@ public class VrPlayerController : MonoBehaviour
 	public RawImage canvasScreen; //Assign a Canvas RawImage to render on a GUI object
 
 	public Texture2D _vlcTexture = null; //This is the texture libVLC writes to directly. It's private.
-	//public RenderTexture rt = null; //We copy it into this texture which we actually use in unity.
+										 //public RenderTexture rt = null; //We copy it into this texture which we actually use in unity.
 
 
 	public string path = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"; //Can be a web path or a local path
@@ -41,6 +41,8 @@ public class VrPlayerController : MonoBehaviour
 	#region unity
 	void Awake()
 	{
+		LoadData();
+
 		RenderSettings.skybox.mainTexture = Texture2D.blackTexture;
 
 		cachePath = Application.temporaryCachePath;
@@ -51,7 +53,7 @@ public class VrPlayerController : MonoBehaviour
 
 		Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
-		if (!Api.HasDeviceParams())	Api.ScanDeviceParams();	
+		if (!Api.HasDeviceParams()) Api.ScanDeviceParams();
 
 		//Setup LibVLC
 		if (libVLC == null)
@@ -80,6 +82,8 @@ public class VrPlayerController : MonoBehaviour
 
 	void OnDestroy()
 	{
+		SaveData();
+
 		mm.Dispose();
 
 		texCache.Clear();
@@ -350,7 +354,7 @@ public class VrPlayerController : MonoBehaviour
 		}
 
 		Core.Initialize(Application.dataPath); //Load VLC dlls
-		libVLC = new LibVLC(enableDebugLogs: true, "--smb-user=Android", "--smb-pwd=", "--input-repeat=9999"); 
+		libVLC = new LibVLC(enableDebugLogs: true, "--smb-user=Android", "--smb-pwd=", "--input-repeat=9999");
 		//You can customize LibVLC with advanced CLI options here https://wiki.videolan.org/VLC_command-line_help/
 
 		//Setup Error Logging
@@ -390,7 +394,8 @@ public class VrPlayerController : MonoBehaviour
 		//- for buffering indication
 		mediaPlayer.Buffering += (s, e) => { isBuffering = true; };
 
-		mediaPlayer.EncounteredError += (s, e) => {
+		mediaPlayer.EncounteredError += (s, e) =>
+		{
 			Debug.LogError("" + e.ToString());
 		};
 
@@ -434,6 +439,9 @@ public class VrPlayerController : MonoBehaviour
 			if (texCache.ContainsKey(rtID))
 			{
 				_vlcTexture = texCache[rtID];
+
+				//- clean from previous video ?
+				_vlcTexture.UpdateExternalTexture(new IntPtr());
 			}
 			else
 			{
@@ -482,6 +490,7 @@ public class VrPlayerController : MonoBehaviour
 		}
 	}
 
+
 	//Converts MediaTrackList objects to Unity-friendly generic lists. Might not be worth the trouble.
 	List<MediaTrack> ConvertMediaTrackList(MediaTrackList tracklist)
 	{
@@ -511,14 +520,51 @@ public class VrPlayerController : MonoBehaviour
 
 	public void SetImageType(bool is360)
 	{
-		if (is360) {
+		if (is360)
+		{
 			RenderSettings.skybox.SetFloat("_Rotation", 90f);
-			RenderSettings.skybox.SetFloat("_ImageType", 0f); 
+			RenderSettings.skybox.SetFloat("_ImageType", 0f);
 		}
-		else {
+		else
+		{
 			RenderSettings.skybox.SetFloat("_Rotation", 0f);
 			RenderSettings.skybox.SetFloat("_ImageType", 1f);
 		}
 	}
+
+	public static string GetFormatedTimeStr(long timeMs)
+	{
+		var timespan = TimeSpan.FromMilliseconds(timeMs);
+		string totalStr;
+		if (timespan.TotalHours >= 1)
+			totalStr = string.Format("{0:D2}:{1:D2}:{2:D2}", timespan.Hours, timespan.Minutes, timespan.Seconds);
+		else
+			totalStr = string.Format("{0}:{1:00}", (int)timespan.TotalMinutes, timespan.Seconds);
+		return totalStr;
+	}
+
+	//---
+
+	#region Save/Load Data
+
+	public SaveData sd;
+	private void LoadData()
+	{
+		if (!File.Exists(UtilSerial.savePath)) {
+			sd = new(); 
+			return; 
+		}
+
+		sd = UtilSerial.ReadJson<SaveData>(UtilSerial.savePath);
+		sd ??= new();
+	}
+
+	private void SaveData()
+	{
+		if (sd == null) return;
+		UtilSerial.WriteJson(sd, UtilSerial.savePath);
+	}
+
+	#endregion
 
 }

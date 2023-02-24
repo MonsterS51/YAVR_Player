@@ -17,6 +17,7 @@ public class MediaItem
 	public MediaItem parentMI = null;
 	private Texture2D thumbnail = null;
 	public float lastScrollPos = 1f;
+	public string mediaInfo = string.Empty;
 
 	public string MediaName { get { return media.Meta(MetadataType.Title); } }
 
@@ -36,7 +37,6 @@ public class MediaItem
 		}
 
 	}
-
 
 
 	public override string ToString()
@@ -107,6 +107,12 @@ public class MediaItem
 
 			}
 		}
+
+		media.ParsedChanged += (x, e) => {
+			if (!isFolder) UpdateMediaInfoStr();
+		};
+
+
 	}
 
 	///<summary> Recreate Media object to run parse again. </summary>
@@ -173,7 +179,6 @@ public class MediaItem
 		cts?.Cancel();
 	}
 
-	public string mediaInfo = string.Empty;
 
 	public Task StartParse(bool updateThumbs = false)
 	{
@@ -181,20 +186,14 @@ public class MediaItem
 		{
 			try
 			{
-				//BUG parsing of video file give no info about video tracks
-				if (isFolder)
+				var mode = isNetwork ? MediaParseOptions.ParseNetwork : MediaParseOptions.ParseLocal;
+				var task = media.ParseAsync(VrPlayerController.libVLC, mode);
+				task.Wait();
+
+				if (!isFolder && updateThumbs && !IsThumbnailCached)
 				{
-					var mode = isNetwork ? MediaParseOptions.ParseNetwork : MediaParseOptions.ParseLocal;
-					var task = media.ParseAsync(VrPlayerController.libVLC, mode);
-					task.Wait();
-				}
-				else
-				{
-					if (updateThumbs && !IsThumbnailCached)
-					{
-						var task2 = RunGenerateThumbnail();
-						task2.Wait();
-					}
+					var task2 = RunGenerateThumbnail();
+					task2.Wait();
 				}
 			}
 			catch (Exception e)
@@ -204,6 +203,19 @@ public class MediaItem
 		});
 
 		return parseTask;
+	}
+
+	private void UpdateMediaInfoStr()
+	{
+		if (media == null) return;
+		media.FileStat(FileStat.Size, out var fSize);
+		media.FileStat(FileStat.Mtime, out var mTime);
+		var refPoint = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+		var modDate = refPoint.AddSeconds(mTime);
+		var dur = VrPlayerController.GetFormatedTimeStr(media.Duration);
+		var size = (fSize / 1024) / 1024;
+		var sizeStr = fSize < 1024 ? $"{size} Mb" : $"{String.Format("{0:0.00}", size / 1024f)} Gb";
+		mediaInfo = $"<{dur}>  <{sizeStr}>  <{modDate}>";
 	}
 
 
