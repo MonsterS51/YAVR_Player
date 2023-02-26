@@ -211,7 +211,6 @@ public class VrPlayerController : MonoBehaviour
 	public void Open(Media media)
 	{
 		Log($"VLCPlayerExample Open <{media.Mrl}>");
-		CreateLibVLC();
 		if (mediaPlayer.Media != null)
 			mediaPlayer.Media.Dispose();
 		mediaPlayer.Media = media;
@@ -357,6 +356,7 @@ public class VrPlayerController : MonoBehaviour
 		{
 			libVLC.Dispose();
 			libVLC = null;
+			DestroyMediaPlayer();
 		}
 
 		Core.Initialize(Application.dataPath); //Load VLC dlls
@@ -442,13 +442,10 @@ public class VrPlayerController : MonoBehaviour
 
 			var rtID = $"{px}x{py}";
 
-
 			if (texCache.ContainsKey(rtID))
 			{
 				_vlcTexture = texCache[rtID];
-
-				//- clean from previous video ?
-				_vlcTexture.UpdateExternalTexture(new IntPtr());
+				_vlcTexture.UpdateExternalTexture(IntPtr.Zero);
 			}
 			else
 			{

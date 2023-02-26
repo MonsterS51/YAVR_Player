@@ -308,10 +308,12 @@ public class UiController : MonoBehaviour
 	{
 		Vibration.Vibrate(vibratorTime);
 
+		var lowName = mi.name.ToLower();
+
 		//- auto detect VR video type by name
-		if (mi.name.Contains("360")) vpCon.SetImageType(true);
+		if (lowName.Contains("360")) vpCon.SetImageType(true);
 		else vpCon.SetImageType(false);
-		if (mi.name.Contains("_ou") | mi.name.Contains("_OU")) vpCon.SetVideoLayout(false);
+		if (lowName.Contains("_ou")) vpCon.SetVideoLayout(false);
 		else vpCon.SetVideoLayout(true);
 
 		curFolderMI?.CancelParseChildMedia();
