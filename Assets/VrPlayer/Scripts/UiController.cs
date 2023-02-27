@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.SpatialTracking;
 using UnityEngine.UI;
 
 public class UiController : MonoBehaviour
@@ -19,7 +20,6 @@ public class UiController : MonoBehaviour
 	public VrPlayerController vpCon;
 
 	public GameObject reticle;
-
 	public GameObject uiRoot;
 
 
@@ -57,6 +57,13 @@ public class UiController : MonoBehaviour
 	public GameObject Btn360;
 	public GameObject BtnSBS;
 	public GameObject BtnOU;
+
+	public GameObject fovPlusBtn;
+	public GameObject fovMinusBtn;
+	public GameObject fovResetBtn;
+	public GameObject fovText;
+
+
 
 	//- fps
 	[SerializeField] private float _fpsRefreshRate = 0.5f;
@@ -112,6 +119,12 @@ public class UiController : MonoBehaviour
 		BtnOU.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetVideoLayout(false); });
 		Btn180.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetImageType(false); });
 		Btn360.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetImageType(true); });
+
+
+		fovMinusBtn.GetComponent<Button>().onClick.AddListener(() => { UnityEngine.XR.XRDevice.fovZoomFactor -= 0.025f; });
+		fovPlusBtn.GetComponent<Button>().onClick.AddListener(() => { UnityEngine.XR.XRDevice.fovZoomFactor += 0.025f; });
+		fovResetBtn.GetComponent<Button>().onClick.AddListener(() => { UnityEngine.XR.XRDevice.fovZoomFactor = 1f; });
+
 
 		//- progressBar events config
 		var seekBarEvents = progressBar.GetComponent<EventTrigger>();
@@ -253,7 +266,7 @@ public class UiController : MonoBehaviour
 				catch (Exception) { }
 			}
 
-
+			fovText.GetComponentInChildren<TextMeshProUGUI>().text = $"{UnityEngine.XR.XRDevice.fovZoomFactor}";
 
 
 		}
