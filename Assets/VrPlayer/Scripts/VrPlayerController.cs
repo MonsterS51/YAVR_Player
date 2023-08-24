@@ -17,13 +17,14 @@ public class VrPlayerController : MonoBehaviour
 	public RawImage canvasScreen; //Assign a Canvas RawImage to render on a GUI object
 
 	public Texture2D _vlcTexture = null; //This is the texture libVLC writes to directly. It's private.
-										 //public RenderTexture rt = null; //We copy it into this texture which we actually use in unity.
+
+	public RenderTexture rt = null; //We copy it into this texture which we actually use in unity.
 
 
 	public string path = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"; //Can be a web path or a local path
 
-	public bool flipTextureX = false; //No particular reason you'd need this but it is sometimes useful
-	public bool flipTextureY = true; //Set to false on Android, to true on Windows
+	public bool flipTextureX = false;	//No particular reason you'd need this but it is sometimes useful
+	public bool flipTextureY = true;	//Set to false on Android, to true on Windows
 
 	public bool automaticallyFlipOnAndroid = true; //Automatically invert Y on Android
 
@@ -138,8 +139,8 @@ public class VrPlayerController : MonoBehaviour
 					_vlcTexture.UpdateExternalTexture(texptr);
 
 					//Copy the vlc texture into the output texture, flipped over
-					//var flip = new Vector2(flipTextureX ? -1 : 1, flipTextureY ? -1 : 1);
-					//Graphics.Blit(_vlcTexture, rt, flip, Vector2.zero); //If you wanted to do post processing outside of VLC you could use a shader here.
+					var flip = new Vector2(flipTextureX ? -1 : 1, flipTextureY ? -1 : 1);
+					Graphics.Blit(_vlcTexture, rt, flip, Vector2.zero); //If you wanted to do post processing outside of VLC you could use a shader here.
 				}
 			}
 		}
@@ -197,7 +198,6 @@ public class VrPlayerController : MonoBehaviour
 
 			var trimmedPath = path.Trim(new char[] { '"' });//Windows likes to copy paths with quotes but Uri does not like to open them
 			mediaPlayer.Media = new Media(new Uri(trimmedPath));
-
 			Log($"VLCPlayerExample Media {mediaPlayer.Media.Mrl}");
 
 			Play();
@@ -235,10 +235,8 @@ public class VrPlayerController : MonoBehaviour
 		Log("VLCPlayerExample Stop");
 		mediaPlayer?.Stop();
 		_vlcTexture = null;
-		//rt = null;
+		rt = null;
 		RenderSettings.skybox.mainTexture = Texture2D.blackTexture;
-
-
 	}
 
 	public void Seek(long timeDelta)
@@ -360,7 +358,12 @@ public class VrPlayerController : MonoBehaviour
 		}
 
 		Core.Initialize(Application.dataPath); //Load VLC dlls
-		libVLC = new LibVLC(enableDebugLogs: true, $"--smb-user={sd.NetLogin}", $"--smb-pwd={sd.NetPass}", "--input-repeat=9999");
+
+		// опции вращения через фильтры тормозят - "--video-filter=rotate", "--rotate-angle=180"
+
+		var options = new string[] { $"--smb-user={sd.NetLogin}", $"--smb-pwd={sd.NetPass}", "--input-repeat=9999"};
+
+		libVLC = new LibVLC(enableDebugLogs: true, options);
 		//You can customize LibVLC with advanced CLI options here https://wiki.videolan.org/VLC_command-line_help/
 
 
@@ -423,7 +426,7 @@ public class VrPlayerController : MonoBehaviour
 	}
 
 	private Dictionary<string, Texture2D> texCache = new();
-	//private Dictionary<string, RenderTexture> rtCache = new();
+	private Dictionary<string, RenderTexture> rtCache = new();
 
 	//Resize the output textures to the size of the video
 	void ResizeOutputTextures(uint px, uint py)
@@ -470,27 +473,29 @@ public class VrPlayerController : MonoBehaviour
 			//	DestroyImmediate(rt);
 			//}
 
-			//if (rtCache.ContainsKey(rtID))
-			//{
-			//	rt = rtCache[rtID];
-			//}
-			//else
-			//{
-			//	rt = new RenderTexture(_vlcTexture.width, _vlcTexture.height, 0, RenderTextureFormat.ARGB32); //Make a renderTexture the same size as vlctex
-			//	rt.name = rtID;
-			//	rtCache.TryAdd(rtID, rt);
-			//	Debug.Log($"Cache RT {rtID}");
-			//}
+			if (rtCache.ContainsKey(rtID))
+			{
+				rt = rtCache[rtID];
+			}
+			else
+			{
+				rt = new RenderTexture(_vlcTexture.width, _vlcTexture.height, 0, RenderTextureFormat.ARGB32); //Make a renderTexture the same size as vlctex
+				rt.name = rtID;
+
+				rtCache.TryAdd(rtID, rt);
+				Debug.Log($"Cache RT {rtID}");
+			}
 
 			//- force destroy old RenderTexture, or it stay in memory for long time
 			Resources.UnloadUnusedAssets();
 
 			if (screen != null)
-				screen.material.mainTexture = _vlcTexture;
+				screen.material.mainTexture = rt;
 			if (canvasScreen != null)
-				canvasScreen.texture = _vlcTexture;
+				canvasScreen.texture = rt;
 
-			RenderSettings.skybox.mainTexture = _vlcTexture;
+			RenderSettings.skybox.mainTexture = rt;
+
 		}
 	}
 

@@ -19,6 +19,9 @@ public class MediaItem
 	public float lastScrollPos = 1f;
 	public string mediaInfo = string.Empty;
 
+	private uint w = 2;
+	private uint h = 1;
+
 	public string MediaName { get { return media.Meta(MetadataType.Title); } }
 
 	public MediaItem(Media media, MediaItem parentMI = null)
@@ -110,7 +113,7 @@ public class MediaItem
 
 		media.ParsedChanged += (x, e) =>
 		{
-			if (!isFolder) UpdateMediaInfoStr();
+			//UpdateMediaInfoStr();
 		};
 
 
@@ -191,20 +194,23 @@ public class MediaItem
 			{
 				try
 				{
-					var mode = isNetwork ? MediaParseOptions.ParseNetwork : MediaParseOptions.ParseLocal;
+					var mode = isNetwork ? MediaParseOptions.FetchNetwork : MediaParseOptions.FetchLocal;
 
 					var task = media.ParseAsync(VrPlayerController.libVLC, mode);
 					task.Wait();
+
+					UpdateMediaInfoStr();
 
 					if (!isFolder && updateThumbs && !IsThumbnailCached)
 					{
 						var task2 = RunGenerateThumbnail();
 						task2.Wait();
 					}
+
 				}
 				catch (Exception e)
 				{
-					Debug.Log($"StartParse : {e.Message}");
+					Debug.LogError($"StartParse : {name} : {e.Message}");
 				}
 			});
 
@@ -215,7 +221,20 @@ public class MediaItem
 
 	private void UpdateMediaInfoStr()
 	{
+		if (isFolder) return;
 		if (media == null) return;
+		mediaInfo = string.Empty;
+
+		//- work only right after parse/fetch
+		var trackList = media.TrackList(TrackType.Video);
+		if (trackList.Count > 0)
+		{
+			w = trackList[0].Data.Video.Width;
+			h = trackList[0].Data.Video.Height;
+			mediaInfo += $"[{w}x{h}] ";
+		}
+		trackList.Dispose();
+
 		media.FileStat(FileStat.Size, out var fSize);
 		media.FileStat(FileStat.Mtime, out var mTime);
 		var refPoint = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
@@ -223,7 +242,8 @@ public class MediaItem
 		var dur = VrPlayerController.GetFormatedTimeStr(media.Duration);
 		var size = (fSize / 1024) / 1024;
 		var sizeStr = size < 1024 ? $"{size} Mb" : $"{String.Format("{0:0.00}", size / 1024f)} Gb";
-		mediaInfo = $"<{dur}>  <{sizeStr}>  <{modDate}>";
+		mediaInfo += $"<{dur}>  <{sizeStr}>  <{modDate.ToString("dd.MM.yyyy")}>";
+
 	}
 
 
@@ -256,16 +276,6 @@ public class MediaItem
 	private Task RunGenerateThumbnail()
 	{
 		//- calc aspect for thumbnail
-		uint w = 2;
-		uint h = 1;
-
-		//BUG TrackList always empty
-		var firstVideoTrack = media.TrackList(TrackType.Video).FirstOrDefault();
-		if (firstVideoTrack != null)
-		{
-			w = firstVideoTrack.Data.Video.Width;
-			h = firstVideoTrack.Data.Video.Height;
-		}
 
 		var aspect = w / (float)h;
 		w = 250;

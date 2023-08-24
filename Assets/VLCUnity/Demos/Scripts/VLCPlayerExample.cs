@@ -7,7 +7,7 @@ using System.Collections.Generic;
 ///This is a basic implementation of a media player using VLC for Unity using LibVLCSharp
 ///It exposes some basic playback controls, you may wish to add more of these
 ///It outputs audio directly to speakers and video to a RenderTexture and a Renderer or RawImage screen
-///This example also shows how to deal with several common problems including vertically flipped videos 
+///This example also shows how to deal with several common problems including vertically flipped videos
 ///
 /// On Android, make sure you require Internet access in your manifest to be able to access internet-hosted videos in these demo scenes.
 ///libvlcsharp usage documentation: https://code.videolan.org/videolan/LibVLCSharp/-/blob/master/docs/home.md
@@ -29,11 +29,9 @@ public class VLCPlayerExample : MonoBehaviour
 
 	public string path = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"; //Can be a web path or a local path
 
-	public bool flipTextureX = false; //No particular reason you'd need this but it is sometimes useful
-	public bool flipTextureY = true; //Set to false on Android, to true on Windows
-
-	public bool automaticallyFlipOnAndroid = true; //Automatically invert Y on Android
-
+	// when copying native Texture2D textures to Unity RenderTextures, the orientation mapping is incorrect on Android, so we flip it over.
+	public bool flipTextureX = true;
+	public bool flipTextureY = true;
 	public bool playOnAwake = true; //Open path and Play during Awake
 
 	public bool logToConsole = false; //Log function calls and LibVLC logs to Unity console
@@ -51,10 +49,6 @@ public class VLCPlayerExample : MonoBehaviour
 			screen = GetComponent<Renderer>();
 		if (canvasScreen == null)
 			canvasScreen = GetComponent<RawImage>();
-
-		//Automatically flip on android
-		if (automaticallyFlipOnAndroid && Application.platform == RuntimePlatform.Android)
-			flipTextureY = !flipTextureY;
 
 		//Setup Media Player
 		CreateMediaPlayer();
@@ -91,7 +85,7 @@ public class VLCPlayerExample : MonoBehaviour
 			{
 				_vlcTexture.UpdateExternalTexture(texptr);
 
-				//Copy the vlc texture into the output texture, flipped over
+				//Copy the vlc texture into the output texture, automatically flipped over
 				var flip = new Vector2(flipTextureX ? -1 : 1, flipTextureY ? -1 : 1);
 				Graphics.Blit(_vlcTexture, texture, flip, Vector2.zero); //If you wanted to do post processing outside of VLC you could use a shader here.
 			}
@@ -276,7 +270,7 @@ public class VLCPlayerExample : MonoBehaviour
 		};
 	}
 
-	//Create a new MediaPlayer object and dispose of the old one. 
+	//Create a new MediaPlayer object and dispose of the old one.
 	void CreateMediaPlayer()
 	{
 		Log("VLCPlayerExample CreateMediaPlayer");
@@ -287,7 +281,7 @@ public class VLCPlayerExample : MonoBehaviour
 		mediaPlayer = new MediaPlayer(libVLC);
 	}
 
-	//Dispose of the MediaPlayer object. 
+	//Dispose of the MediaPlayer object.
 	void DestroyMediaPlayer()
 	{
 		Log("VLCPlayerExample DestroyMediaPlayer");

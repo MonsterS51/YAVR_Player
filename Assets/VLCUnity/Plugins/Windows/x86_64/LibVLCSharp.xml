@@ -578,6 +578,11 @@
             Returns true if running in 64bit process, false otherwise
             </summary>
         </member>
+        <member name="P:LibVLCSharp.PlatformHelper.IsArm64BitProcess">
+            <summary>
+            Returns true if running in ARM64 process, false otherwise
+            </summary>
+        </member>
         <member name="T:LibVLCSharp.Internal">
             <summary>
             This base class is used for the main libvlc types
