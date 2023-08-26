@@ -6,16 +6,11 @@ using System.Threading.Tasks;
 
 public class SaveData
 {
-	public string LastFolder { get; set; } = string.Empty;
 	public string LastFile { get; set; } = string.Empty;
-
 	public string NetLogin { get; set; } = string.Empty;
 	public string NetPass { get; set; } = string.Empty;
-
-
-	//TODO скролл последней папки
-
-	//TODO FOV камеры
+	public int Volume { get; set; } = 100;
+	public float FilesListScroll { get; set; } = 0f;
 
 }
 

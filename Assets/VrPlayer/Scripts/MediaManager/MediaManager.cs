@@ -37,7 +37,7 @@ public class MediaManager
 
 			var diskMedia = new Media(new Uri($"{drive.Name}"));
 			var newMI = new MediaItem(diskMedia);
-			newMI.name = drive.Name;
+			newMI.name = $"(DR) {drive.Name}";
 			newMI.isFolder = true;
 			newMI.isNetwork = false;
 			rootItems.Add(newMI);
@@ -65,7 +65,7 @@ public class MediaManager
 
 			var diskMedia = new Media(new Uri($"{dir}"));
 			var newMI = new MediaItem(diskMedia);
-			newMI.name = dir;
+			newMI.name = $"(SD) {dir}";
 			newMI.isFolder = true;
 			newMI.isNetwork = false;
 			rootItems.Add(newMI);

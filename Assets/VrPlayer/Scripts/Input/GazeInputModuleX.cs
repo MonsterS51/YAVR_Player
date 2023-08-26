@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.UI;
 
 //Build on top of https://github.com/RenanDresch/GazeInputSystem/blob/WIP/Assets/Package/Examples/Scripts/GazeInputModule.cs
 
@@ -83,7 +85,7 @@ public class GazeInputModuleX : PointerInputModule
 		var newClick = ExecuteEvents.GetEventHandler<IPointerClickHandler>(currentOverGo);
 
 		// didnt find a press handler... search for a click handler
-		if (newPressed == null)	newPressed = newClick;
+		if (newPressed == null) newPressed = newClick;
 
 		pointerEvent.clickCount = 1;
 		pointerEvent.pointerPress = newPressed;
@@ -109,7 +111,10 @@ public class GazeInputModuleX : PointerInputModule
 		// PointerClick and Drop events
 		if (pointerEvent.pointerClick == pointerClickHandler && pointerEvent.eligibleForClick)
 		{
-			ExecuteEvents.Execute(pointerEvent.pointerClick, pointerEvent, ExecuteEvents.pointerClickHandler);
+			var clicked = ExecuteEvents.Execute(pointerEvent.pointerClick, pointerEvent, ExecuteEvents.pointerClickHandler);
+
+			//make some noise on click
+			if (clicked) VrPlayerController.Vibrate();
 		}
 		if (pointerEvent.pointerDrag != null && pointerEvent.dragging)
 		{

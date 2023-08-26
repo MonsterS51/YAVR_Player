@@ -9,42 +9,38 @@ using UnityEngine.XR.Management;
 
 public class VrPlayerController : MonoBehaviour
 {
-	public static LibVLC libVLC; //The LibVLC class is mainly used for making MediaPlayer and Media objects. You should only have one LibVLC instance.
-	public MediaPlayer mediaPlayer; //MediaPlayer is the main class we use to interact with VLC
+	public static LibVLC libVLC;	//The LibVLC class is mainly used for making MediaPlayer and Media objects. You should only have one LibVLC instance.
+	public MediaPlayer mediaPlayer;	//MediaPlayer is the main class we use to interact with VLC
+
+	public GameObject sphere;
+	private Material sphereMat;
 
 	//Screens
-	public Renderer screen; //Assign a mesh to render on a 3d object
-	public RawImage canvasScreen; //Assign a Canvas RawImage to render on a GUI object
+	public Renderer screen;					//Assign a mesh to render on a 3d object
+	public RawImage canvasScreen;			//Assign a Canvas RawImage to render on a GUI object
 
-	public Texture2D _vlcTexture = null; //This is the texture libVLC writes to directly. It's private.
-
-	public RenderTexture rt = null; //We copy it into this texture which we actually use in unity.
-
+	public Texture2D _vlcTexture = null;	//This is the texture libVLC writes to directly. It's private.
+	public RenderTexture rt = null;			//We copy it into this texture which we actually use in unity.
 
 	public string path = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"; //Can be a web path or a local path
 
 	public bool flipTextureX = false;	//No particular reason you'd need this but it is sometimes useful
 	public bool flipTextureY = true;	//Set to false on Android, to true on Windows
 
-	public bool automaticallyFlipOnAndroid = true; //Automatically invert Y on Android
-
-	public bool playOnAwake = true; //Open path and Play during Awake
-
-	public bool logToConsole = false; //Log function calls and LibVLC logs to Unity console
-
+	public bool automaticallyFlipOnAndroid = true;	//Automatically invert Y on Android
 
 	public MediaManager mm = new();
 
 	public static string cachePath;
 
+	#region Unity
 
-	//Unity Awake, OnDestroy, and Update functions
-	#region unity
 	void Awake()
 	{
 		LoadData();
 
-		RenderSettings.skybox.mainTexture = Texture2D.blackTexture;
+		sphereMat = sphere.GetComponent<MeshRenderer>().material;
+		sphereMat.mainTexture = Texture2D.blackTexture;
 
 		cachePath = Application.temporaryCachePath;
 
@@ -75,10 +71,6 @@ public class VrPlayerController : MonoBehaviour
 
 		mm._libVLC = libVLC;
 		mm.InitializeMediaDiscoverers();
-
-		//Play On Start
-		if (playOnAwake)
-			Open();
 	}
 
 	void OnDestroy()
@@ -87,6 +79,7 @@ public class VrPlayerController : MonoBehaviour
 
 		mm.Dispose();
 
+		rtCache.Clear();
 		texCache.Clear();
 
 		//- Dispose of mediaPlayer, or it will stay in nemory and keep playing audio
@@ -140,7 +133,7 @@ public class VrPlayerController : MonoBehaviour
 
 					//Copy the vlc texture into the output texture, flipped over
 					var flip = new Vector2(flipTextureX ? -1 : 1, flipTextureY ? -1 : 1);
-					Graphics.Blit(_vlcTexture, rt, flip, Vector2.zero); //If you wanted to do post processing outside of VLC you could use a shader here.
+					Graphics.Blit(_vlcTexture, rt, flip, Vector2.zero);	//If you wanted to do post processing outside of VLC you could use a shader here.
 				}
 			}
 		}
@@ -149,15 +142,17 @@ public class VrPlayerController : MonoBehaviour
 
 	void OnApplicationFocus(bool hasFocus)
 	{
-		if (!hasFocus) { 
-			mediaPlayer?.SetPause(true); 
+		if (!hasFocus)
+		{
+			mediaPlayer?.SetPause(true);
 			SaveData();
 		}
 	}
 
 	void OnApplicationPause(bool pauseStatus)
 	{
-		if (pauseStatus) { 
+		if (pauseStatus)
+		{
 			mediaPlayer?.SetPause(true);
 			SaveData();
 		}
@@ -165,9 +160,7 @@ public class VrPlayerController : MonoBehaviour
 
 	#endregion
 
-	/// <summary>
-	/// Gets a value indicating whether the VR mode is enabled.
-	/// </summary>
+	/// <summary>  Gets a value indicating whether the VR mode is enabled. /// </summary>
 	private bool _isVrModeEnabled
 	{
 		get
@@ -179,92 +172,75 @@ public class VrPlayerController : MonoBehaviour
 
 	//---
 
-	//Public functions that expose VLC MediaPlayer functions in a Unity-friendly way. You may want to add more of these.
-	#region vlc
+	#region Player Actions
 	public void Open(string path)
 	{
-		Log("VLCPlayerExample Open " + path);
+		Debug.Log($"Open {path}");
 		this.path = path;
-		Open();
-	}
 
-	public void Open()
-	{
 		try
 		{
-			Log("VLCPlayerExample Open");
-			if (mediaPlayer.Media != null)
-				mediaPlayer.Media.Dispose();
-
-			var trimmedPath = path.Trim(new char[] { '"' });//Windows likes to copy paths with quotes but Uri does not like to open them
+			mediaPlayer?.Media?.Dispose();
+			var trimmedPath = path.Trim(new char[] { '"' });	//Windows likes to copy paths with quotes but Uri does not like to open them
 			mediaPlayer.Media = new Media(new Uri(trimmedPath));
-			Log($"VLCPlayerExample Media {mediaPlayer.Media.Mrl}");
-
 			Play();
 		}
 		catch (Exception ex)
 		{
-			Debug.LogError($"[YAVR]: Cant open <{mediaPlayer.Media.Mrl}> : " + ex.Message);
+			Debug.LogError($"Cant open <{mediaPlayer.Media.Mrl}> : {ex.Message}");
 		}
+
 	}
 
-	public void Open(Media media)
+	public void Open(Media media, bool autoPlay = true)
 	{
-		Log($"VLCPlayerExample Open <{media.Mrl}>");
+		Debug.Log($"Open Media <{media.Mrl}>");
 		if (mediaPlayer.Media != null)
 			mediaPlayer.Media.Dispose();
 		mediaPlayer.Media = media;
-		Play();
+		if (autoPlay) Play();
 	}
 
 	public void Play()
 	{
-		Log("VLCPlayerExample Play");
-
 		mediaPlayer.Play();
 	}
 
 	public void Pause()
 	{
-		Log("VLCPlayerExample Pause");
 		mediaPlayer.Pause();
+	}
+
+	public void PlayPause()
+	{
+		if (mediaPlayer.IsPlaying) mediaPlayer.Pause();
+		else Play();
 	}
 
 	public void Stop()
 	{
-		Log("VLCPlayerExample Stop");
 		mediaPlayer?.Stop();
 		_vlcTexture = null;
 		rt = null;
-		RenderSettings.skybox.mainTexture = Texture2D.blackTexture;
+		sphereMat.mainTexture = Texture2D.blackTexture;
 	}
 
 	public void Seek(long timeDelta)
 	{
-		Log("VLCPlayerExample Seek " + timeDelta);
 		mediaPlayer.SetTime(mediaPlayer.Time + timeDelta);
 	}
 
 	public void SetTime(long time)
 	{
-		Log("VLCPlayerExample SetTime " + time);
-		mediaPlayer.SetTime(time);
+		mediaPlayer.SetTime(time, true);
 	}
 
-	public void SetVolume(int volume = 100)
+	public void AddVolume(int volume)
 	{
-		Log("VLCPlayerExample SetVolume " + volume);
-		mediaPlayer.SetVolume(volume);
-	}
-
-	public int Volume
-	{
-		get
-		{
-			if (mediaPlayer == null)
-				return 0;
-			return mediaPlayer.Volume;
-		}
+		var newVol = mediaPlayer.Volume + volume;
+		newVol = Mathf.Clamp(newVol, 0, 100);
+		mediaPlayer.SetVolume(newVol);
+		if (sd != null) sd.Volume = newVol;
 	}
 
 	public bool IsPlaying
@@ -297,30 +273,6 @@ public class VrPlayerController : MonoBehaviour
 		}
 	}
 
-	public List<MediaTrack> Tracks(TrackType type)
-	{
-		Log("VLCPlayerExample Tracks " + type);
-		return ConvertMediaTrackList(mediaPlayer?.Tracks(type));
-	}
-
-	public MediaTrack SelectedTrack(TrackType type)
-	{
-		Log("VLCPlayerExample SelectedTrack " + type);
-		return mediaPlayer?.SelectedTrack(type);
-	}
-
-	public void Select(MediaTrack track)
-	{
-		Log("VLCPlayerExample Select " + track.Name);
-		mediaPlayer?.Select(track);
-	}
-
-	public void Unselect(TrackType type)
-	{
-		Log("VLCPlayerExample Unselect " + type);
-		mediaPlayer?.Unselect(type);
-	}
-
 	public string GetCurrentPlayedTitle()
 	{
 		if (mediaPlayer.Media == null) return string.Empty;
@@ -336,19 +288,22 @@ public class VrPlayerController : MonoBehaviour
 		if (tracks == null || tracks.Count == 0)
 			return null;
 
-		var orientation = tracks[0]?.Data.Video.Orientation; //At the moment we're assuming the track we're playing is the first track
+		var orientation = tracks[0]?.Data.Video.Orientation;	//At the moment we're assuming the track we're playing is the first track
+
+		tracks.Dispose();
 
 		return orientation;
 	}
 
 	#endregion
 
-	//Private functions create and destroy VLC objects and textures
-	#region internal
-	//Create a new static LibVLC instance and dispose of the old one. You should only ever have one LibVLC instance.
-	void CreateLibVLC()
+	//---
+
+	#region LibVlc internal
+
+	///<summary> Create a new static LibVLC instance and dispose of the old one. You should only ever have one LibVLC instance.</summary>
+	private void CreateLibVLC()
 	{
-		Log("VLCPlayerExample CreateLibVLC");
 		//Dispose of the old libVLC if necessary
 		if (libVLC != null)
 		{
@@ -357,13 +312,15 @@ public class VrPlayerController : MonoBehaviour
 			DestroyMediaPlayer();
 		}
 
-		Core.Initialize(Application.dataPath); //Load VLC dlls
+		Core.Initialize(Application.dataPath);	//Load VLC dlls
 
 		// опции вращения через фильтры тормозят - "--video-filter=rotate", "--rotate-angle=180"
 
-		var options = new string[] { $"--smb-user={sd.NetLogin}", $"--smb-pwd={sd.NetPass}", "--input-repeat=9999"};
+		var options = new string[] { $"--smb-user={sd.NetLogin}", $"--smb-pwd={sd.NetPass}", "--input-repeat=9999" };
 
-		libVLC = new LibVLC(enableDebugLogs: true, options);
+		var debugLogs = false;
+
+		libVLC = new LibVLC(enableDebugLogs: debugLogs, options);
 		//You can customize LibVLC with advanced CLI options here https://wiki.videolan.org/VLC_command-line_help/
 
 
@@ -371,33 +328,27 @@ public class VrPlayerController : MonoBehaviour
 		Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
 		libVLC.Log += (s, e) =>
 		{
-			//Always use try/catch in LibVLC events.
-			//LibVLC can freeze Unity if an exception goes unhandled inside an event handler.
+			if (!debugLogs) return;
+
 			try
 			{
-				if (logToConsole)
-				{
-					Log(e.FormattedLog);
-				}
+				Debug.Log(e.FormattedLog);
 			}
 			catch (Exception ex)
 			{
-				Log("Exception caught in libVLC.Log: \n" + ex.ToString());
+				Debug.Log("Exception caught in libVLC.Log: \n" + ex.ToString());
 			}
-
 		};
 	}
 
-	public bool isBuffering = false;
+	public static bool isBuffering = false;
 
-	//Create a new MediaPlayer object and dispose of the old one. 
-	void CreateMediaPlayer()
+
+	///<summary> Create a new MediaPlayer object and dispose of the old one.  </summary>
+	private void CreateMediaPlayer()
 	{
-		Log("VLCPlayerExample CreateMediaPlayer");
-		if (mediaPlayer != null)
-		{
-			DestroyMediaPlayer();
-		}
+		if (mediaPlayer != null) DestroyMediaPlayer();
+
 		mediaPlayer = new MediaPlayer(libVLC);
 		mediaPlayer.EnableHardwareDecoding = true;
 
@@ -413,23 +364,24 @@ public class VrPlayerController : MonoBehaviour
 		mediaPlayer.FileCaching = 500;
 		mediaPlayer.NetworkCaching = 500;
 
+		mediaPlayer.SetVolume(100);
+		if (sd != null) mediaPlayer.SetVolume(sd.Volume);
+
 		Resources.UnloadUnusedAssets();
 	}
 
-	//Dispose of the MediaPlayer object. 
-	void DestroyMediaPlayer()
+	private void DestroyMediaPlayer()
 	{
-		Log("VLCPlayerExample DestroyMediaPlayer");
 		mediaPlayer?.Stop();
 		mediaPlayer?.Dispose();
 		mediaPlayer = null;
 	}
 
-	private Dictionary<string, Texture2D> texCache = new();
-	private Dictionary<string, RenderTexture> rtCache = new();
+	private readonly Dictionary<string, Texture2D> texCache = new();
+	private readonly Dictionary<string, RenderTexture> rtCache = new();
 
-	//Resize the output textures to the size of the video
-	void ResizeOutputTextures(uint px, uint py)
+	///<summary> Resize the output textures to the size of the video </summary>
+	private void ResizeOutputTextures(uint px, uint py)
 	{
 		var texptr = mediaPlayer.GetTexture(px, py, out bool updated);
 		if (px != 0 && py != 0 && updated && texptr != IntPtr.Zero)
@@ -466,7 +418,7 @@ public class VrPlayerController : MonoBehaviour
 			//- destroy old RenderTexture
 			//if (rt != null)
 			//{
-			//	RenderSettings.skybox.mainTexture = null;
+			//	sphereMat.mainTexture.mainTexture = null;
 			//	rt.Release();
 			//	rt.DiscardContents();
 			//	RenderTexture.ReleaseTemporary(rt);
@@ -476,11 +428,13 @@ public class VrPlayerController : MonoBehaviour
 			if (rtCache.ContainsKey(rtID))
 			{
 				rt = rtCache[rtID];
+				ClearOutRenderTexture(rt);
 			}
 			else
 			{
-				rt = new RenderTexture(_vlcTexture.width, _vlcTexture.height, 0, RenderTextureFormat.ARGB32); //Make a renderTexture the same size as vlctex
+				rt = new RenderTexture(_vlcTexture.width, _vlcTexture.height, 0, RenderTextureFormat.ARGB32);	//Make a renderTexture the same size as vlctex
 				rt.name = rtID;
+				rt.antiAliasing = 8;
 
 				rtCache.TryAdd(rtID, rt);
 				Debug.Log($"Cache RT {rtID}");
@@ -494,50 +448,42 @@ public class VrPlayerController : MonoBehaviour
 			if (canvasScreen != null)
 				canvasScreen.texture = rt;
 
-			RenderSettings.skybox.mainTexture = rt;
-
+			sphereMat.mainTexture = rt;
 		}
 	}
 
-
-	//Converts MediaTrackList objects to Unity-friendly generic lists. Might not be worth the trouble.
-	List<MediaTrack> ConvertMediaTrackList(MediaTrackList tracklist)
+	public void ClearOutRenderTexture(RenderTexture renderTexture)
 	{
-		if (tracklist == null)
-			return new List<MediaTrack>(); //Return an empty list
-
-		var tracks = new List<MediaTrack>((int)tracklist.Count);
-		for (uint i = 0; i < tracklist.Count; i++)
-		{
-			tracks.Add(tracklist[i]);
-		}
-		return tracks;
+		RenderTexture rt = RenderTexture.active;
+		RenderTexture.active = renderTexture;
+		GL.Clear(true, true, Color.black);
+		RenderTexture.active = rt;
 	}
 
-	void Log(string message)
-	{
-		if (logToConsole)
-			Debug.Log($"[YAVR]: {message}");
-	}
 	#endregion
+
+	//---
+
+	#region Player Util
+
 
 	public void SetVideoLayout(bool isSBS)
 	{
-		if (isSBS) RenderSettings.skybox.SetFloat("_Layout", 1f);
-		else RenderSettings.skybox.SetFloat("_Layout", 2f);
+		if (isSBS) sphereMat.SetFloat("_Layout", 1f);
+		else sphereMat.SetFloat("_Layout", 2f);
 	}
 
 	public void SetImageType(bool is360)
 	{
 		if (is360)
 		{
-			RenderSettings.skybox.SetFloat("_Rotation", 90f);
-			RenderSettings.skybox.SetFloat("_ImageType", 0f);
+			sphereMat.SetFloat("_Rotation", 90f);
+			sphereMat.SetFloat("_ImageType", 0f);
 		}
 		else
 		{
-			RenderSettings.skybox.SetFloat("_Rotation", 0f);
-			RenderSettings.skybox.SetFloat("_ImageType", 1f);
+			sphereMat.SetFloat("_Rotation", 0f);
+			sphereMat.SetFloat("_ImageType", 1f);
 		}
 	}
 
@@ -552,6 +498,31 @@ public class VrPlayerController : MonoBehaviour
 		return totalStr;
 	}
 
+	public void AddZoom(bool positive = true)
+	{
+		var size = sphere.transform.localScale.z;
+		var posV = sphere.transform.position;
+		var step = size * 0.01f;
+		posV.z += positive ? -step : step;
+		posV.z = Mathf.Clamp(posV.z, -size * 0.5f, size * 0.5f);
+		sphere.transform.position = posV;
+	}
+
+	public void ResetZoom()
+	{
+		var posV = sphere.transform.position;
+		posV.z = 0;
+		sphere.transform.position = posV;
+	}
+
+	public static void Vibrate()
+	{
+		Vibration.Vibrate(20);
+		Debug.Log("Vibrate");
+	}
+
+	#endregion
+
 	//---
 
 	#region Save/Load Data
@@ -559,9 +530,10 @@ public class VrPlayerController : MonoBehaviour
 	public SaveData sd;
 	private void LoadData()
 	{
-		if (!File.Exists(UtilSerial.savePath)) {
-			sd = new(); 
-			return; 
+		if (!File.Exists(UtilSerial.savePath))
+		{
+			sd = new();
+			return;
 		}
 
 		sd = UtilSerial.ReadJson<SaveData>(UtilSerial.savePath);

@@ -44,7 +44,7 @@ public class MediaItem
 
 	public override string ToString()
 	{
-		return $"<{(isFolder ? "DIR " : "")}{MediaName}({media.SubItems.Count})>";
+		return $"<{(isFolder ? "DIR " : "")}{name}({media.SubItems.Count})>";
 	}
 
 	private string[] vFormats = { ".mkv", ".mp4", ".avi", ".mpg", ".mpeg", ".ts", ".webm" };
@@ -211,6 +211,7 @@ public class MediaItem
 				catch (Exception e)
 				{
 					Debug.LogError($"StartParse : {name} : {e.Message}");
+
 				}
 			});
 
@@ -307,7 +308,9 @@ public class MediaItem
 		if (File.Exists(filePath))
 		{
 			fileData = File.ReadAllBytes(filePath);
-			tex = new Texture2D(2, 2);
+			tex = new Texture2D(2, 2, TextureFormat.RGBA32, true);
+			tex.filterMode = FilterMode.Trilinear;
+			tex.anisoLevel = 8;
 			tex.LoadImage(fileData);
 		}
 		return tex;
