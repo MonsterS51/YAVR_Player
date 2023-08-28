@@ -1,10 +1,9 @@
 using System;
+using System.Collections;
 using System.IO;
 using System.Linq;
 using Google.XR.Cardboard;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.UI;
 
 public class UiController : MonoBehaviour
@@ -16,6 +15,8 @@ public class UiController : MonoBehaviour
 	public MediaItem curFolderMI = null;
 
 	public GameObject uiRoot;
+	public GameObject lowToggleUiBtn;
+	public GameObject lowRecenterBtn;
 
 	//- Utils Panel
 	public GameObject utilsCanvas;
@@ -40,8 +41,9 @@ public class UiController : MonoBehaviour
 		Btn180.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetImageType(false); });
 		Btn360.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetImageType(true); });
 
+		lowToggleUiBtn.GetComponent<Button>().onClick.AddListener(() => { ToogleUi(); });
+		lowRecenterBtn.GetComponent<Button>().onClick.AddListener(() => { StartCoroutine(RecenterTimed()); });
 	}
-
 
 
 	void OnDestroy()
@@ -54,6 +56,18 @@ public class UiController : MonoBehaviour
 	public void ToogleUi()
 	{
 		uiRoot.SetActive(!uiRoot.activeInHierarchy);
+	}
+
+	private IEnumerator RecenterTimed()
+	{
+		yield return new WaitForSeconds(2f);
+		try
+		{
+			Api.Recenter();
+			Vibration.Vibrate(20);
+		}
+		catch (Exception) { }
+
 	}
 
 	public bool IsUiEnabled { get { return uiRoot.activeInHierarchy; } }
@@ -150,7 +164,7 @@ public class UiController : MonoBehaviour
 	{
 		var stepMs = 10000;
 		vpCon.Seek(positive ? stepMs : -stepMs);
-		mps.SetMessageText($"Seek {(positive ? "+" : "-")} {stepMs/100}s");
+		mps.SetMessageText($"Seek {(positive ? "+" : "-")} {stepMs / 100}s");
 	}
 
 	public void AddZoom(bool positive = true)
