@@ -22,6 +22,9 @@ public class UtilsPanelScript : MonoBehaviour
 	public GameObject fovResetBtn;
 	public GameObject fovText;
 
+	public GameObject gazeToggle;
+	public GazeInputModuleX gazeInpuModule;
+
 	void Start()
 	{
 		zoomMinusBtn.GetComponent<Button>().onClick.AddListener(() => { uiCon.AddZoom(false); UiUpdate(); });
@@ -31,6 +34,14 @@ public class UtilsPanelScript : MonoBehaviour
 		fovMinusBtn.GetComponent<Button>().onClick.AddListener(() => { UnityEngine.XR.XRDevice.fovZoomFactor -= 0.025f; });
 		fovPlusBtn.GetComponent<Button>().onClick.AddListener(() => { UnityEngine.XR.XRDevice.fovZoomFactor += 0.025f; });
 		fovResetBtn.GetComponent<Button>().onClick.AddListener(() => { UnityEngine.XR.XRDevice.fovZoomFactor = 1f; });
+
+		gazeInpuModule.gazeEnabled = vpCon.sd.GazeControlEnabled;
+		var gazeTogComp = gazeToggle.GetComponent<Toggle>();
+		gazeTogComp.isOn = gazeInpuModule.gazeEnabled;
+		gazeTogComp.onValueChanged.AddListener((x) => { 
+			gazeInpuModule.gazeEnabled = x;
+			vpCon.sd.GazeControlEnabled = x;
+		});
 
 		InvokeRepeating(nameof(UiUpdate), 0f, 0.5f);
 	}

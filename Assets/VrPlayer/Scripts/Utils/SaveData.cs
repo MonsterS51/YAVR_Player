@@ -11,6 +11,6 @@ public class SaveData
 	public string NetPass { get; set; } = string.Empty;
 	public int Volume { get; set; } = 100;
 	public float FilesListScroll { get; set; } = 0f;
-
+	public bool GazeControlEnabled { get; set; } = false;
 }
 

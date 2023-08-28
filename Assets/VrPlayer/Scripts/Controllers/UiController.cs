@@ -15,7 +15,6 @@ public class UiController : MonoBehaviour
 
 	public MediaItem curFolderMI = null;
 
-	public GameObject reticle;
 	public GameObject uiRoot;
 
 	//- Utils Panel
@@ -25,11 +24,6 @@ public class UiController : MonoBehaviour
 	public GameObject Btn360;
 	public GameObject BtnSBS;
 	public GameObject BtnOU;
-
-	private string mediaInfoStr = string.Empty;
-
-	void Awake() { }
-
 
 	// Start is called before the first frame update
 	void Start()

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -12,12 +13,38 @@ using UnityEngine.UI;
 public class GazeInputModuleX : PointerInputModule
 {
 	public GameObject reticle;
-	public GameObject m_CurrentFocusedGameObject;
+	public GameObject currentFocusedObject;
+	public bool focusedIsClickable = false;
 
-	public override void Process()
+	private float gazeInteval = 1.5f;
+	public float gazeTimer = 0;
+	public bool gazeEnabled = true;
+	public bool gazeInProgress = false;
+	public GameObject gazeObject = null;
+
+
+	private readonly Type[] clickableType = {
+		typeof(Button),
+		typeof(ScrollRect),
+		typeof(Slider),
+		typeof(Toggle),
+		typeof(ToggleGroup)
+	};
+
+	//---
+
+	void Update()
 	{
-		ProcessMouseEvent();
+		if (gazeTimer > 0) gazeTimer -= Time.deltaTime;
+		if (gazeInProgress)
+		{
+			//scale reticle from x3 to x1
+			var percent = ((gazeTimer / gazeInteval) * 2f) + 1f;
+			reticle.transform.localScale = new Vector3(percent, percent, 1);
+		}
 	}
+
+	//---
 
 	public bool IsTriggerPushed()
 	{
@@ -26,6 +53,48 @@ public class GazeInputModuleX : PointerInputModule
 			(Gamepad.current != null && Gamepad.current[GamepadButton.A].wasPressedThisFrame);
 	}
 
+	public override void Process()
+	{
+		ProcessMouseEvent();
+	}
+
+	///<summary> Clicking by gaze. </summary>
+	private void GazeProcess(PointerEventData ped)
+	{
+		if (!gazeEnabled) return;
+
+		// gaze object changed
+		if (gazeObject != currentFocusedObject)
+		{
+			gazeObject = currentFocusedObject;
+
+			if (gazeObject != null && focusedIsClickable)
+			{
+				// gaze start
+				gazeTimer = gazeInteval;
+				gazeInProgress = true;
+			}
+
+			if (gazeObject == null | !focusedIsClickable)
+			{
+				// abort gaze
+				gazeTimer = 0;
+				gazeInProgress = false;
+				reticle.transform.localScale = Vector3.one;
+			}
+
+		}
+		else
+		{
+			// gaze send click and done
+			if (gazeInProgress && gazeTimer <= 0)
+			{
+				ProcessMousePress(ped);
+				gazeInProgress = false;
+				reticle.transform.localScale = Vector3.one;
+			}
+		}
+	}
 
 	protected void ProcessMouseEvent()
 	{
@@ -42,15 +111,27 @@ public class GazeInputModuleX : PointerInputModule
 		eventSystem.RaycastAll(pointerEventData, raycastResults);
 		pointerEventData.pointerCurrentRaycast = FindFirstRaycast(raycastResults);
 
-		if (pointerEventData.pointerEnter != m_CurrentFocusedGameObject)
+		//process 'OnPointerEnter'
+		if (pointerEventData.pointerEnter != currentFocusedObject)
 		{
 			// deselect previous element
 			HandlePointerExitAndEnter(pointerEventData, null);
-			HandlePointerExitAndEnter(pointerEventData, m_CurrentFocusedGameObject);
-			pointerEventData.pointerEnter = m_CurrentFocusedGameObject;
+			HandlePointerExitAndEnter(pointerEventData, currentFocusedObject);
+			pointerEventData.pointerEnter = currentFocusedObject;
 		}
 
-		m_CurrentFocusedGameObject = pointerEventData.pointerCurrentRaycast.gameObject;
+		var eventGo = pointerEventData.pointerCurrentRaycast.gameObject;
+
+		// update reticle color on change focus
+		if (currentFocusedObject != eventGo)
+		{
+			focusedIsClickable = IsClickable(eventGo);
+			SetReticleColor(focusedIsClickable ? Color.cyan : Color.white);
+		}
+
+		currentFocusedObject = eventGo;
+
+		GazeProcess(pointerEventData);
 
 		// Process the first mouse button fully
 		if (IsTriggerPushed()) ProcessMousePress(pointerEventData);
@@ -58,7 +139,7 @@ public class GazeInputModuleX : PointerInputModule
 		//ProcessDrag(pointerEventData);
 
 		//- hide reticle on nothing
-		reticle.SetActive(m_CurrentFocusedGameObject != null);
+		reticle.SetActive(currentFocusedObject != null);
 	}
 
 
@@ -142,6 +223,29 @@ public class GazeInputModuleX : PointerInputModule
 			HandlePointerExitAndEnter(pointerEvent, currentOverGo);
 		}
 
+	}
+
+	//---
+
+	private void SetReticleColor(Color color)
+	{
+		var image = reticle.GetComponent<Image>();
+		if (image != null) image.color = color;
+	}
+
+	private bool IsClickable(GameObject go)
+	{
+		if (go == null) return false;
+
+		if (clickableType.Contains(go.GetType())) return true;
+
+		foreach (var clickType in clickableType)
+		{
+			var parentComps = go.GetComponentsInParent(clickType);
+			if (parentComps.Length > 0) return true;
+		}
+
+		return false;
 	}
 
 

@@ -52,6 +52,8 @@ public class VrPlayerController : MonoBehaviour
 
 		if (!Api.HasDeviceParams()) Api.ScanDeviceParams();
 
+		Debug.Log($"VR Device: {UnityEngine.XR.XRSettings.loadedDeviceName}");
+
 		//Setup LibVLC
 		if (libVLC == null)
 			CreateLibVLC();
