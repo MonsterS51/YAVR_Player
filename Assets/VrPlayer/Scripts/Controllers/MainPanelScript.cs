@@ -76,6 +76,7 @@ public class MainPanelScript : MonoBehaviour
 
 	public void UpdateTitle(MediaItem mi)
 	{
+		if (mi?.media == null) return;
 		var title = mi.media.Meta(MetadataType.Title);
 		mediaTitle.GetComponent<TextMeshProUGUI>().SetText(title);
 		SetMediaInfoText(mi.mediaInfo);

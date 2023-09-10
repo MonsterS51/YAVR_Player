@@ -20,13 +20,7 @@ public class UiController : MonoBehaviour
 
 	//- Utils Panel
 	public GameObject utilsCanvas;
-	public GameObject clearThumbBtn;
-	public GameObject Btn180;
-	public GameObject Btn360;
-	public GameObject BtnSBS;
-	public GameObject BtnOU;
 
-	// Start is called before the first frame update
 	void Start()
 	{
 
@@ -34,12 +28,7 @@ public class UiController : MonoBehaviour
 		var q = utilsCanvas.transform.rotation;
 		utilsCanvas.transform.rotation = Quaternion.Euler(0, q.eulerAngles.y + 180, 0);
 
-		clearThumbBtn.GetComponent<Button>().onClick.AddListener(() => { ClearThumbnailsCache(); });
 
-		BtnSBS.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetVideoLayout(true); });
-		BtnOU.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetVideoLayout(false); });
-		Btn180.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetImageType(false); });
-		Btn360.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetImageType(true); });
 
 		lowToggleUiBtn.GetComponent<Button>().onClick.AddListener(() => { ToogleUi(); });
 		lowRecenterBtn.GetComponent<Button>().onClick.AddListener(() => { StartCoroutine(RecenterTimed()); });
@@ -82,8 +71,8 @@ public class UiController : MonoBehaviour
 		//- auto detect VR video type by name
 		if (lowName.Contains("360")) vpCon.SetImageType(true);
 		else vpCon.SetImageType(false);
-		if (lowName.Contains("_ou")) vpCon.SetVideoLayout(false);
-		else vpCon.SetVideoLayout(true);
+		if (lowName.Contains("_ou")) vpCon.SetVideoLayout(VrPlayerController.StereoMode.OU);
+		else vpCon.SetVideoLayout(VrPlayerController.StereoMode.SBS);
 
 		curFolderMI?.CancelParseChildMedia();
 
@@ -95,7 +84,7 @@ public class UiController : MonoBehaviour
 		mps.UpdateTitle(mi);
 	}
 
-	private void ClearThumbnailsCache()
+	public void ClearThumbnailsCache()
 	{
 		try
 		{
@@ -156,15 +145,16 @@ public class UiController : MonoBehaviour
 
 	public void AddVolume(bool positive)
 	{
-		vpCon.AddVolume(positive ? 5 : -5);
+		var step = 2;
+		vpCon.AddVolume(positive ? step : -step);
 		SetMessageText($"Volume: {vpCon.mediaPlayer.Volume} %");
 	}
 
 	public void Seek(bool positive)
 	{
-		var stepMs = 10000;
+		var stepMs = 100000;
 		vpCon.Seek(positive ? stepMs : -stepMs);
-		mps.SetMessageText($"Seek {(positive ? "+" : "-")} {stepMs / 100}s");
+		mps.SetMessageText($"Seek {(positive ? "+" : "-")}{stepMs / 1000}s");
 	}
 
 	public void AddZoom(bool positive = true)

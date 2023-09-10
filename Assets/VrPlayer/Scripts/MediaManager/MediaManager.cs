@@ -22,7 +22,7 @@ public class MediaManager
 			discoverer.MediaList.ItemAdded += (x, e) => { Debug.Log($"[YAVR]: Found {md.Name} : {e.Media.Meta(MetadataType.Title)}"); };
 			_mediaDiscoverers.Add(discoverer);
 			discoverer.Start();
-			Debug.Log($"[YAVR]: Discover found {md.Name}");
+			Debug.Log($"[YAVR]: Discoverer found {md.Name}");
 		}
 
 	}

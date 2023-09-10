@@ -25,7 +25,7 @@ public class FilesPanelScript : MonoBehaviour
 	public GameObject textFPS;
 
 	//- fps
-	[SerializeField] private float _fpsRefreshRate = 0.5f;
+	[SerializeField] private float _fpsRefreshRate = 0.2f;
 	private float _fpsTimer;
 
 	void Start()
@@ -53,14 +53,13 @@ public class FilesPanelScript : MonoBehaviour
 
 	void Update()
 	{
-		if (uiCon.IsUiEnabled && Time.unscaledTime > _fpsTimer)
-		{
-			int fps = (int)(1f / Time.unscaledDeltaTime);
-			_fpsTimer = Time.unscaledTime + _fpsRefreshRate;
-			var tmpFps = textFPS.GetComponentInChildren<TextMeshProUGUI>();
-			tmpFps.text = $"FPS: {fps}";
-		}
-
+		if (!uiCon.IsUiEnabled) return;
+		if (Time.unscaledTime <= _fpsTimer) return;
+		
+		int fps = (int)(1f / Time.unscaledDeltaTime);
+		_fpsTimer = Time.unscaledTime + _fpsRefreshRate;
+		var tmpFps = textFPS.GetComponentInChildren<TextMeshProUGUI>();
+		tmpFps.text = $"FPS: {fps}";
 	}
 
 	private void UiUpdate()
@@ -357,14 +356,14 @@ public class FilesPanelScript : MonoBehaviour
 		if (!string.IsNullOrWhiteSpace(folderUri.Host)) uriSegments.Add(folderUri.Host);
 		uriSegments.AddRange(folderUri.Segments);
 
-		//Debug.Log($"LastFolder Segs: {string.Join(",\n", uriSegments)}");
+		//Debug.Log($"LastFolder Segments: {string.Join(",\n", uriSegments)}");
 
 		bool isRoot = true;
 		foreach (var uriSeg in uriSegments)
 		{
-			var curFolder = uriSeg;
+			var curFolder = uriSeg.Trim('\\', '/');
 			//Debug.Log($" > Uri Segment: {curFolder}");
-			if (string.IsNullOrWhiteSpace(curFolder.Trim('\\', '/'))) continue;
+			if (string.IsNullOrWhiteSpace(curFolder)) continue;
 
 			uiCon.SetMessageText($"Try Open: {curFolder}");
 
@@ -398,10 +397,11 @@ public class FilesPanelScript : MonoBehaviour
 			else
 			{
 				miList = uiCon.curFolderMI.listSubMI;
-				curFolder = curFolder.TrimEnd('\\', '/');   //- Non root folders without trailing '/'
 			}
 
-			//Debug.Log($"   >>> Subs MI: {string.Join("\n", miList.Select(x => x.media.Mrl))}");
+			if (curFolder.EndsWith(':')) curFolder = curFolder + "/";
+
+			//Debug.Log($"   >>> Search <{curFolder.ToLower()}> in list:\n   {string.Join("\n   ", miList.Select(x => x.media.Mrl))}");
 
 			var nextMI = miList.FirstOrDefault(mi => mi.media.Mrl.ToLower().EndsWith(curFolder.ToLower()));
 			if (nextMI == null) break;

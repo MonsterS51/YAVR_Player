@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Google.XR.Cardboard;
 using LibVLCSharp;
 using UnityEngine;
@@ -9,25 +10,25 @@ using UnityEngine.XR.Management;
 
 public class VrPlayerController : MonoBehaviour
 {
-	public static LibVLC libVLC;	//The LibVLC class is mainly used for making MediaPlayer and Media objects. You should only have one LibVLC instance.
-	public MediaPlayer mediaPlayer;	//MediaPlayer is the main class we use to interact with VLC
+	public static LibVLC libVLC;    //The LibVLC class is mainly used for making MediaPlayer and Media objects. You should only have one LibVLC instance.
+	public MediaPlayer mediaPlayer; //MediaPlayer is the main class we use to interact with VLC
 
 	public GameObject sphere;
 	private Material sphereMat;
 
 	//Screens
-	public Renderer screen;					//Assign a mesh to render on a 3d object
-	public RawImage canvasScreen;			//Assign a Canvas RawImage to render on a GUI object
+	public Renderer screen;                 //Assign a mesh to render on a 3d object
+	public RawImage canvasScreen;           //Assign a Canvas RawImage to render on a GUI object
 
-	public Texture2D _vlcTexture = null;	//This is the texture libVLC writes to directly. It's private.
-	public RenderTexture rt = null;			//We copy it into this texture which we actually use in unity.
+	public Texture2D _vlcTexture = null;    //This is the texture libVLC writes to directly. It's private.
+	public RenderTexture rt = null;         //We copy it into this texture which we actually use in unity.
 
 	public string path = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"; //Can be a web path or a local path
 
-	public bool flipTextureX = false;	//No particular reason you'd need this but it is sometimes useful
-	public bool flipTextureY = true;	//Set to false on Android, to true on Windows
+	public bool flipTextureX = false;   //No particular reason you'd need this but it is sometimes useful
+	public bool flipTextureY = true;    //Set to false on Android, to true on Windows
 
-	public bool automaticallyFlipOnAndroid = true;	//Automatically invert Y on Android
+	public bool automaticallyFlipOnAndroid = true;  //Automatically invert Y on Android
 
 	public MediaManager mm = new();
 
@@ -44,9 +45,9 @@ public class VrPlayerController : MonoBehaviour
 
 		cachePath = Application.temporaryCachePath;
 
-		//- lock fps to 60 for heat and energy saving
+		//- set targetFrameRate to max for smooth camera and less android vsync stutters
 		QualitySettings.vSyncCount = 0;
-		Application.targetFrameRate = 60;
+		Application.targetFrameRate = 999;
 
 		Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
@@ -135,7 +136,7 @@ public class VrPlayerController : MonoBehaviour
 
 					//Copy the vlc texture into the output texture, flipped over
 					var flip = new Vector2(flipTextureX ? -1 : 1, flipTextureY ? -1 : 1);
-					Graphics.Blit(_vlcTexture, rt, flip, Vector2.zero);	//If you wanted to do post processing outside of VLC you could use a shader here.
+					Graphics.Blit(_vlcTexture, rt, flip, Vector2.zero); //If you wanted to do post processing outside of VLC you could use a shader here.
 				}
 			}
 		}
@@ -183,7 +184,7 @@ public class VrPlayerController : MonoBehaviour
 		try
 		{
 			mediaPlayer?.Media?.Dispose();
-			var trimmedPath = path.Trim(new char[] { '"' });	//Windows likes to copy paths with quotes but Uri does not like to open them
+			var trimmedPath = path.Trim(new char[] { '"' });    //Windows likes to copy paths with quotes but Uri does not like to open them
 			mediaPlayer.Media = new Media(new Uri(trimmedPath));
 			Play();
 		}
@@ -229,17 +230,25 @@ public class VrPlayerController : MonoBehaviour
 
 	public void Seek(long timeDelta)
 	{
-		mediaPlayer.SetTime(mediaPlayer.Time + timeDelta);
+		mediaPlayer?.SetTime(mediaPlayer.Time + timeDelta);
 	}
 
 	public void SetTime(long time)
 	{
-		mediaPlayer.SetTime(time, true);
+		mediaPlayer?.SetTime(time, true);
 	}
 
 	public void AddVolume(int volume)
 	{
+		if (mediaPlayer == null) return;
 		var newVol = mediaPlayer.Volume + volume;
+		SetVolume(newVol);
+	}
+
+	public void SetVolume(int volume)
+	{
+		if (mediaPlayer == null) return;
+		var newVol = volume;
 		newVol = Mathf.Clamp(newVol, 0, 100);
 		mediaPlayer.SetVolume(newVol);
 		if (sd != null) sd.Volume = newVol;
@@ -290,7 +299,7 @@ public class VrPlayerController : MonoBehaviour
 		if (tracks == null || tracks.Count == 0)
 			return null;
 
-		var orientation = tracks[0]?.Data.Video.Orientation;	//At the moment we're assuming the track we're playing is the first track
+		var orientation = tracks[0]?.Data.Video.Orientation;    //At the moment we're assuming the track we're playing is the first track
 
 		tracks.Dispose();
 
@@ -314,7 +323,7 @@ public class VrPlayerController : MonoBehaviour
 			DestroyMediaPlayer();
 		}
 
-		Core.Initialize(Application.dataPath);	//Load VLC dlls
+		Core.Initialize(Application.dataPath);  //Load VLC dlls
 
 		// опции вращения через фильтры тормозят - "--video-filter=rotate", "--rotate-angle=180"
 
@@ -363,8 +372,8 @@ public class VrPlayerController : MonoBehaviour
 		};
 
 
-		mediaPlayer.FileCaching = 500;
-		mediaPlayer.NetworkCaching = 500;
+		mediaPlayer.FileCaching = 10000;
+		mediaPlayer.NetworkCaching = 10000;
 
 		mediaPlayer.SetVolume(100);
 		if (sd != null) mediaPlayer.SetVolume(sd.Volume);
@@ -434,9 +443,8 @@ public class VrPlayerController : MonoBehaviour
 			}
 			else
 			{
-				rt = new RenderTexture(_vlcTexture.width, _vlcTexture.height, 0, RenderTextureFormat.ARGB32);	//Make a renderTexture the same size as vlctex
+				rt = new RenderTexture(_vlcTexture.width, _vlcTexture.height, 0, RenderTextureFormat.ARGB32);   //Make a renderTexture the same size as vlctex
 				rt.name = rtID;
-				rt.antiAliasing = 8;
 
 				rtCache.TryAdd(rtID, rt);
 				Debug.Log($"Cache RT {rtID}");
@@ -469,10 +477,15 @@ public class VrPlayerController : MonoBehaviour
 	#region Player Util
 
 
-	public void SetVideoLayout(bool isSBS)
+	public enum StereoMode {
+		None = 0,
+		SBS = 1,
+		OU = 2
+}
+
+	public void SetVideoLayout(StereoMode mode)
 	{
-		if (isSBS) sphereMat.SetFloat("_Layout", 1f);
-		else sphereMat.SetFloat("_Layout", 2f);
+		sphereMat.SetFloat("_Layout", (float)mode);
 	}
 
 	public void SetImageType(bool is360)
