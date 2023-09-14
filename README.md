@@ -2,20 +2,24 @@
 
 Yet Another VR Player for Google Cardboard based on <a href="https://unity.com">Unity</a>, <a href="https://github.com/googlevr/cardboard-xr-plugin">Cardboard XR Plugin</a> and <a href="https://code.videolan.org/videolan/vlc-unity">LibVLC</a>.
 
+<p align="center"><img src="./ReadMe-assets/ScreenCap.gif"></p>
+
 # Features:
-* 180°/360° Over/Under or Side-by-Side frame layout.
+* VR: 180°/360°.
+* 3D frame layout: None, Over/Under or Side-by-Side.
 * Up to 4096x2048 video dimension. 
 * Any video format supported by your phone (and LibVLC).
 * Fullspeed SMB LAN support over WiFi.
 * Gaze control, gamepad support.
 * File explorer with thumbnail generation.
 * Android built-in VR headset configuration with QR codes
-(make your custom QR config with <a href="http://www.sitesinvr.com">this</a>).
-* Zoom preferences
+(you can make custom QR config with <a href="http://www.sitesinvr.com">this</a>).
+* Zoom preferences.
 
 ## Bugs and problems:
 * Distorted LibVLC watermark on bottom. Used a trial package and I don't have $100 for a license yet (and it's not worth it).
 * App may not ask for all permissions, grant them manually.
+* Some Android Vsync performance fluctuation and stutters on >60hz screen.
 * Crash app after multiple playback restart. 
 Unity LibVLC <a href="https://code.videolan.org/videolan/vlc-unity/-/issues/180">issue</a>.
 * LibVLC forced play in VR emulation mode if found VR metadata in video.

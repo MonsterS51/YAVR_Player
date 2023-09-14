@@ -47,7 +47,7 @@ public class VrPlayerController : MonoBehaviour
 
 		//- set targetFrameRate to max for smooth camera and less android vsync stutters
 		QualitySettings.vSyncCount = 0;
-		Application.targetFrameRate = 999;
+		Application.targetFrameRate = 120;
 
 		Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
