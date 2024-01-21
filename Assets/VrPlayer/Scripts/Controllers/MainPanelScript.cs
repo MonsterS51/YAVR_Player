@@ -65,13 +65,16 @@ public class MainPanelScript : MonoBehaviour
 
 		if (!uiCon.IsUiEnabled) return;
 
-		if (!_isDraggingSeekBar && vpCon?.mediaPlayer != null && vpCon.mediaPlayer.IsPlaying)
-		{
-			progressBar.value = (float)vpCon.mediaPlayer.Position;
-			UpdateMediaTime();
-		}
+		UpdateTitle(uiCon.curPlayedMI);
 
+		UpdateProgressUI();
+	}
 
+	public void UpdateProgressUI()
+	{
+		if (_isDraggingSeekBar || vpCon?.mediaPlayer == null || !vpCon.mediaPlayer.IsPlaying) return;
+		progressBar.value = (float)vpCon.mediaPlayer.Position;
+		UpdateMediaTime();
 	}
 
 	public void UpdateTitle(MediaItem mi)
@@ -95,7 +98,6 @@ public class MainPanelScript : MonoBehaviour
 			vpCon.mediaPlayer.Pause();
 		}
 		else vpCon.Play();
-		UpdateTitle(uiCon.curPlayedMI);
 	}
 
 	public void Stop()

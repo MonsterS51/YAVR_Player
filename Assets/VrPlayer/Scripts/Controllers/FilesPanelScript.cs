@@ -81,7 +81,7 @@ public class FilesPanelScript : MonoBehaviour
 		else
 			textBuffering.SetActive(false);
 
-		//- update thumbnails in buttons
+		//- update buttons info
 		if (uiCon.curFolderMI != null && !uiCon.curFolderMI.parseInProgress)
 		{
 			try
@@ -89,13 +89,12 @@ public class FilesPanelScript : MonoBehaviour
 				var fileBtns = filesListContent.GetComponentsInChildren<Button>(true);
 				foreach (var subMi in uiCon.curFolderMI.listSubMI)
 				{
-					if (subMi.isFolder) continue;
 					var fileBtn = fileBtns.FirstOrDefault(x => x.name == subMi.name);
 					if (fileBtn == null) continue;
+					UpdateFileButtonInfoLine(fileBtn.gameObject, subMi.mediaInfo);
 
+					if (subMi.isFolder) continue;
 					UpdateFileButtonThumbnail(fileBtn.gameObject, subMi.GetThumbnailFromCache());
-					UpdateFileButtonInfoLine(fileBtn.gameObject, subMi);
-
 
 					if (vpCon.mediaPlayer != null && vpCon.mediaPlayer.Media != null)
 					{
@@ -108,7 +107,9 @@ public class FilesPanelScript : MonoBehaviour
 					}
 				}
 			}
-			catch (Exception) { }
+			catch (Exception ex) {
+				Debug.LogException(ex);
+			}
 		}
 	}
 
@@ -162,12 +163,11 @@ public class FilesPanelScript : MonoBehaviour
 
 	}
 
-	///<summary> Update the preview texture on the file button. </summary>
-	private void UpdateFileButtonInfoLine(GameObject go, MediaItem mi)
+	///<summary> Update info line, if needed. </summary>
+	private void UpdateFileButtonInfoLine(GameObject go, string text)
 	{
-		if (string.IsNullOrWhiteSpace(mi.mediaInfo)) return;
 		var secondLine = go.transform.Find("SecondLineText")?.GetComponentInChildren<TextMeshProUGUI>();
-		if (secondLine != null && secondLine.text.Length <= 0) secondLine.text = mi.mediaInfo;
+		if (secondLine != null) secondLine.text = text;
 	}
 
 	private void ClearFilesContentPanel()
@@ -183,11 +183,10 @@ public class FilesPanelScript : MonoBehaviour
 		var newButton = Instantiate(fileButtonPrefab);
 		newButton.name = mi.name;
 
-
 		var firstLine = newButton.transform.Find("FirstLineText")?.GetComponentInChildren<TextMeshProUGUI>();
 		if (firstLine != null) firstLine.text = mi.name;
-		var secondLine = newButton.transform.Find("SecondLineText")?.GetComponentInChildren<TextMeshProUGUI>();
-		if (secondLine != null) secondLine.text = mi.mediaInfo;
+
+		UpdateFileButtonInfoLine(newButton, mi.mediaInfo);
 
 		var btnComp = newButton.GetComponent<Button>();
 		btnComp.onClick.AddListener(() => action?.Invoke());
@@ -362,9 +361,9 @@ public class FilesPanelScript : MonoBehaviour
 		foreach (var uriSeg in uriSegments)
 		{
 			var curFolder = uriSeg.Trim('\\', '/');
-			//Debug.Log($" > Uri Segment: {curFolder}");
 			if (string.IsNullOrWhiteSpace(curFolder)) continue;
 
+			Debug.Log($" > Try Open: {curFolder}");
 			uiCon.SetMessageText($"Try Open: {curFolder}");
 
 			if (uiCon.curFolderMI != null)
@@ -403,7 +402,7 @@ public class FilesPanelScript : MonoBehaviour
 
 			//Debug.Log($"   >>> Search <{curFolder.ToLower()}> in list:\n   {string.Join("\n   ", miList.Select(x => x.media.Mrl))}");
 
-			var nextMI = miList.FirstOrDefault(mi => mi.media.Mrl.ToLower().EndsWith(curFolder.ToLower()));
+			var nextMI = miList.FirstOrDefault(mi => mi.media.Mrl.ToLower().EndsWith("/" + curFolder.ToLower()));
 			if (nextMI == null) break;
 
 			//Debug.Log($"   >>> nextMI: {nextMI}");

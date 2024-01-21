@@ -10,25 +10,25 @@ using UnityEngine.XR.Management;
 
 public class VrPlayerController : MonoBehaviour
 {
-	public static LibVLC libVLC;    //The LibVLC class is mainly used for making MediaPlayer and Media objects. You should only have one LibVLC instance.
-	public MediaPlayer mediaPlayer; //MediaPlayer is the main class we use to interact with VLC
+	public static LibVLC libVLC;	//The LibVLC class is mainly used for making MediaPlayer and Media objects. You should only have one LibVLC instance.
+	public MediaPlayer mediaPlayer;	//MediaPlayer is the main class we use to interact with VLC
 
 	public GameObject sphere;
 	private Material sphereMat;
 
 	//Screens
-	public Renderer screen;                 //Assign a mesh to render on a 3d object
-	public RawImage canvasScreen;           //Assign a Canvas RawImage to render on a GUI object
+	public Renderer screen;					//Assign a mesh to render on a 3d object
+	public RawImage canvasScreen;			//Assign a Canvas RawImage to render on a GUI object
 
-	public Texture2D _vlcTexture = null;    //This is the texture libVLC writes to directly. It's private.
-	public RenderTexture rt = null;         //We copy it into this texture which we actually use in unity.
+	public Texture2D _vlcTexture = null;	//This is the texture libVLC writes to directly. It's private.
+	public RenderTexture rt = null;			//We copy it into this texture which we actually use in unity.
 
 	public string path = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"; //Can be a web path or a local path
 
-	public bool flipTextureX = false;   //No particular reason you'd need this but it is sometimes useful
-	public bool flipTextureY = true;    //Set to false on Android, to true on Windows
+	public bool flipTextureX = false;	//No particular reason you'd need this but it is sometimes useful
+	public bool flipTextureY = true;	//Set to false on Android, to true on Windows
 
-	public bool automaticallyFlipOnAndroid = true;  //Automatically invert Y on Android
+	public bool automaticallyFlipOnAndroid = true;	//Automatically invert Y on Android
 
 	public MediaManager mm = new();
 
@@ -46,7 +46,7 @@ public class VrPlayerController : MonoBehaviour
 		cachePath = Application.temporaryCachePath;
 
 		//- set targetFrameRate to max for smooth camera and less android vsync stutters
-		QualitySettings.vSyncCount = 0;
+		QualitySettings.vSyncCount = 1;
 		Application.targetFrameRate = 120;
 
 		Screen.sleepTimeout = SleepTimeout.NeverSleep;
@@ -98,19 +98,11 @@ public class VrPlayerController : MonoBehaviour
 		{
 			if (Api.IsCloseButtonPressed)
 			{
-				//ExitVR();
+				Application.Quit();
 			}
 
 			if (Api.IsGearButtonPressed) Api.ScanDeviceParams();
 			Api.UpdateScreenParams();
-		}
-		else
-		{
-			// TODO(b/171727815): Add a button to switch to VR mode.
-			//if (_isScreenTouched)
-			//{
-			//	EnterVR();
-			//}
 		}
 
 		if (mediaPlayer != null)
@@ -136,7 +128,7 @@ public class VrPlayerController : MonoBehaviour
 
 					//Copy the vlc texture into the output texture, flipped over
 					var flip = new Vector2(flipTextureX ? -1 : 1, flipTextureY ? -1 : 1);
-					Graphics.Blit(_vlcTexture, rt, flip, Vector2.zero); //If you wanted to do post processing outside of VLC you could use a shader here.
+					Graphics.Blit(_vlcTexture, rt, flip, Vector2.zero);	//If you wanted to do post processing outside of VLC you could use a shader here.
 				}
 			}
 		}
@@ -184,7 +176,7 @@ public class VrPlayerController : MonoBehaviour
 		try
 		{
 			mediaPlayer?.Media?.Dispose();
-			var trimmedPath = path.Trim(new char[] { '"' });    //Windows likes to copy paths with quotes but Uri does not like to open them
+			var trimmedPath = path.Trim(new char[] { '"' });	//Windows likes to copy paths with quotes but Uri does not like to open them
 			mediaPlayer.Media = new Media(new Uri(trimmedPath));
 			Play();
 		}
@@ -198,8 +190,9 @@ public class VrPlayerController : MonoBehaviour
 	public void Open(Media media, bool autoPlay = true)
 	{
 		Debug.Log($"Open Media <{media.Mrl}>");
-		if (mediaPlayer.Media != null)
-			mediaPlayer.Media.Dispose();
+		//if (mediaPlayer.Media != null)
+		//	mediaPlayer.Media.Dispose();
+
 		mediaPlayer.Media = media;
 		if (autoPlay) Play();
 	}
@@ -299,7 +292,7 @@ public class VrPlayerController : MonoBehaviour
 		if (tracks == null || tracks.Count == 0)
 			return null;
 
-		var orientation = tracks[0]?.Data.Video.Orientation;    //At the moment we're assuming the track we're playing is the first track
+		var orientation = tracks[0]?.Data.Video.Orientation;	//At the moment we're assuming the track we're playing is the first track
 
 		tracks.Dispose();
 
@@ -323,7 +316,7 @@ public class VrPlayerController : MonoBehaviour
 			DestroyMediaPlayer();
 		}
 
-		Core.Initialize(Application.dataPath);  //Load VLC dlls
+		Core.Initialize(Application.dataPath);	//Load VLC dlls
 
 		// опции вращения через фильтры тормозят - "--video-filter=rotate", "--rotate-angle=180"
 
@@ -336,7 +329,7 @@ public class VrPlayerController : MonoBehaviour
 
 
 		//Setup Error Logging
-		Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
+		Application.SetStackTraceLogType(LogType.Error, StackTraceLogType.ScriptOnly);
 		libVLC.Log += (s, e) =>
 		{
 			if (!debugLogs) return;
@@ -394,8 +387,8 @@ public class VrPlayerController : MonoBehaviour
 	///<summary> Resize the output textures to the size of the video </summary>
 	private void ResizeOutputTextures(uint px, uint py)
 	{
-		var texptr = mediaPlayer.GetTexture(px, py, out bool updated);
-		if (px != 0 && py != 0 && updated && texptr != IntPtr.Zero)
+		var texptr = mediaPlayer.GetTexture(px, py, out _);
+		if (px != 0 && py != 0 && texptr != IntPtr.Zero)
 		{
 
 			//If the currently playing video uses the Bottom Right orientation, we have to do this to avoid stretching it.
@@ -443,7 +436,7 @@ public class VrPlayerController : MonoBehaviour
 			}
 			else
 			{
-				rt = new RenderTexture(_vlcTexture.width, _vlcTexture.height, 0, RenderTextureFormat.ARGB32);   //Make a renderTexture the same size as vlctex
+				rt = new RenderTexture(_vlcTexture.width, _vlcTexture.height, 0, RenderTextureFormat.ARGB32);	//Make a renderTexture the same size as vlctex
 				rt.name = rtID;
 
 				rtCache.TryAdd(rtID, rt);
@@ -477,11 +470,12 @@ public class VrPlayerController : MonoBehaviour
 	#region Player Util
 
 
-	public enum StereoMode {
+	public enum StereoMode
+	{
 		None = 0,
 		SBS = 1,
 		OU = 2
-}
+	}
 
 	public void SetVideoLayout(StereoMode mode)
 	{

@@ -113,7 +113,8 @@ public class MediaItem
 
 		media.ParsedChanged += (x, e) =>
 		{
-			//UpdateMediaInfoStr();
+			//Debug.Log($"MI {name} : ParsedChanged {e.ParsedStatus}");
+			UpdateMediaInfoStr();
 		};
 
 
@@ -161,11 +162,8 @@ public class MediaItem
 				foreach (var subMI in listSubMI)
 				{
 					if (ct.IsCancellationRequested) return;
-					if (!subMI.isFolder)
-					{
-						var subTask = subMI.StartParse(updateThumbs);
-						subTask.Wait();
-					}
+					var subTask = subMI.StartParse(updateThumbs);
+					subTask.Wait();
 				}
 			}
 			catch (Exception) { }
@@ -195,11 +193,8 @@ public class MediaItem
 				try
 				{
 					var mode = isNetwork ? MediaParseOptions.FetchNetwork : MediaParseOptions.FetchLocal;
-
 					var task = media.ParseAsync(VrPlayerController.libVLC, mode);
 					task.Wait();
-
-					UpdateMediaInfoStr();
 
 					if (!isFolder && updateThumbs && !IsThumbnailCached)
 					{
@@ -222,7 +217,12 @@ public class MediaItem
 
 	private void UpdateMediaInfoStr()
 	{
-		if (isFolder) return;
+		if (isFolder) {
+			mediaInfo = $"{listSubMI.Where(x => !x.isFolder).Count()} video";
+			return; 
+		}
+
+
 		if (media == null) return;
 		mediaInfo = string.Empty;
 

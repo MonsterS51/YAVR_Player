@@ -11,6 +11,14 @@ scopes = {
 	"last_search.C4949528" = " t:RenderTexture"
 	"OpenInspectorPreview.C4949528" = "0"
 	"currentGroup.C4949528" = "asset"
+	"last_search.98CF4AA6" = "head"
+	"OpenInspectorPreview.98CF4AA6" = "0"
+	"currentGroup.98CF4AA6" = "scene"
+	"picker_window_position_offset.0B486DF2" = "130,4152;338,717;319,6981;549,7358"
+	"picker_search_text.0B486DF2" = ""
+	"last_search.0B486DF2" = ""
+	"OpenInspectorPreview.0B486DF2" = "0"
+	"currentGroup.0B486DF2" = null
 }
 providers = {
 	adb = {
@@ -58,10 +66,16 @@ providers = {
 		priority = 100
 		defaultAction = null
 	}
+	presets_provider = {
+		active = false
+		priority = -10
+		defaultAction = null
+	}
 }
 objectSelectors = {
 }
 recentSearches = [
+	"Text"
 ]
 searchItemFavorites = [
 ]

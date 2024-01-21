@@ -45,6 +45,9 @@ public class UiController : MonoBehaviour
 	public void ToogleUi()
 	{
 		uiRoot.SetActive(!uiRoot.activeInHierarchy);
+
+		//- instantly update progress on show main panel
+		if (IsUiEnabled) mps.UpdateProgressUI();
 	}
 
 	private IEnumerator RecenterTimed()
@@ -66,6 +69,9 @@ public class UiController : MonoBehaviour
 
 	public void OpenMediaFile(MediaItem mi, bool autoPlay = true)
 	{
+		//- parse for info string
+		mi.StartParse(false);
+
 		var lowName = mi.name.ToLower();
 
 		//- auto detect VR video type by name
