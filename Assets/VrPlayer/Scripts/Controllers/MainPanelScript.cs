@@ -45,7 +45,7 @@ public class MainPanelScript : MonoBehaviour
 		seekBarPointerUp.eventID = EventTriggerType.PointerUp;
 		seekBarPointerUp.callback.AddListener((data) =>
 		{
-			if (vpCon.mediaPlayer.IsPlaying) vpCon?.mediaPlayer?.SetPosition(progressBar.value);
+			if (vpCon.mediaPlayer.IsPlaying) vpCon?.SetPosition(progressBar.value);
 			_isDraggingSeekBar = false;
 		});
 		seekBarEvents.triggers.Add(seekBarPointerUp);

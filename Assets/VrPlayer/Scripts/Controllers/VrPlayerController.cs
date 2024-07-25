@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Web;
 using Google.XR.Cardboard;
 using LibVLCSharp;
@@ -46,9 +45,13 @@ public class VrPlayerController : MonoBehaviour
 
 		cachePath = Application.temporaryCachePath;
 
+
+		// 0 + 60			=> держит условно плавные 60fps даже при 120Hz, при тротлинге начинает жестко дропать до 20fps
+		// 0 или 1 + 120	=> если больше 60Hz - картинка дергается, при ручном снижении частоты экрана до 60Hz - плавно до тротлинга
+
 		//- set targetFrameRate to max for smooth camera and less android vsync stutters
-		QualitySettings.vSyncCount = 1;
-		Application.targetFrameRate = 120;
+		QualitySettings.vSyncCount = 0;
+		Application.targetFrameRate = 60;
 
 		Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
@@ -59,6 +62,9 @@ public class VrPlayerController : MonoBehaviour
 		//Setup LibVLC
 		if (libVLC == null)
 			CreateLibVLC();
+
+
+		Debug.Log($"LibVLC:{libVLC.Version}  ABI:{libVLC.ABI}");
 
 		//Setup Screen
 		if (screen == null)
@@ -202,6 +208,7 @@ public class VrPlayerController : MonoBehaviour
 
 	public void Play()
 	{
+		if (mediaPlayer.IsPlaying) return;
 		mediaPlayer.Play();
 	}
 
@@ -226,12 +233,23 @@ public class VrPlayerController : MonoBehaviour
 
 	public void Seek(long timeDelta)
 	{
+		if (!mediaPlayer.IsSeekable) return;
+		Debug.Log($"{nameof(Seek)} : {mediaPlayer.Time} + {timeDelta}");
 		mediaPlayer?.SetTime(mediaPlayer.Time + timeDelta);
 	}
 
 	public void SetTime(long time)
 	{
-		mediaPlayer?.SetTime(time, true);
+		if (!mediaPlayer.IsSeekable) return;
+		mediaPlayer?.SetTime(time);
+	}
+
+	public void SetPosition(float posPercent)
+	{
+		if (!mediaPlayer.IsSeekable) return;
+		Debug.Log($"{nameof(SetPosition)} : {posPercent}");
+		var result = mediaPlayer?.SetPosition(posPercent);
+		Debug.Log($"{nameof(SetPosition)} : {result}");
 	}
 
 	public void AddVolume(int volume)
@@ -308,6 +326,8 @@ public class VrPlayerController : MonoBehaviour
 
 	#region LibVlc internal
 
+	private readonly bool _debugLogs = false;
+
 	///<summary> Create a new static LibVLC instance and dispose of the old one. You should only ever have one LibVLC instance.</summary>
 	private void CreateLibVLC()
 	{
@@ -325,27 +345,14 @@ public class VrPlayerController : MonoBehaviour
 
 		var options = new string[] { $"--smb-user={sd.NetLogin}", $"--smb-pwd={sd.NetPass}", "--input-repeat=9999" };
 
-		var debugLogs = false;
-
-		libVLC = new LibVLC(enableDebugLogs: debugLogs, options);
+		libVLC = new LibVLC(enableDebugLogs: _debugLogs, options);
 		//You can customize LibVLC with advanced CLI options here https://wiki.videolan.org/VLC_command-line_help/
-
 
 		//Setup Error Logging
 		Application.SetStackTraceLogType(LogType.Error, StackTraceLogType.ScriptOnly);
-		libVLC.Log += (s, e) =>
-		{
-			if (!debugLogs) return;
 
-			try
-			{
-				Debug.Log(e.FormattedLog);
-			}
-			catch (Exception ex)
-			{
-				Debug.Log("Exception caught in libVLC.Log: \n" + ex.ToString());
-			}
-		};
+		if (!_debugLogs) return;
+		libVLC.Log += (s, e) => { Debug.Log(e.FormattedLog); };
 	}
 
 	public static bool isBuffering = false;
@@ -364,12 +371,12 @@ public class VrPlayerController : MonoBehaviour
 
 		mediaPlayer.EncounteredError += (s, e) =>
 		{
-			Debug.LogError("" + e.ToString());
+			Debug.LogError("MediaPlayer:" + e.ToString());
 		};
 
 
-		mediaPlayer.FileCaching = 10000;
-		mediaPlayer.NetworkCaching = 10000;
+		mediaPlayer.FileCaching = 1000;
+		mediaPlayer.NetworkCaching = 1000;
 
 		mediaPlayer.SetVolume(100);
 		if (sd != null) mediaPlayer.SetVolume(sd.Volume);

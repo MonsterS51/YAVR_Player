@@ -168,6 +168,7 @@ public class MediaItem
 			{
 				try
 				{
+					// в некоторых версиях libVLC Fetch и Parse режимы перепутаны
 					var mode = isNetwork ? MediaParseOptions.FetchNetwork : MediaParseOptions.FetchLocal;
 					var parseTask = media.ParseAsync(VrPlayerController.libVLC, mode);
 					parseTask.Wait();

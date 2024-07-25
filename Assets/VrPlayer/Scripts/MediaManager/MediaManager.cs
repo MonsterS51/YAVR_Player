@@ -15,6 +15,8 @@ public class MediaManager
 
 	public void InitializeMediaDiscoverers()
 	{
+		if (Application.isEditor) return;       //! новое libVlc стало стопорить редактор
+
 		Dispose();
 		foreach (var md in _libVLC.MediaDiscoverers(MediaDiscovererCategory.Lan))
 		{
@@ -109,11 +111,21 @@ public class MediaManager
 
 	public void Dispose()
 	{
-		foreach (var md in _mediaDiscoverers)
+		if (Application.isEditor) return;       //! новое libVlc стало стопорить редактор
+
+		try
 		{
-			md.Dispose();
+			foreach (var md in _mediaDiscoverers)
+			{
+				md.Dispose();
+			}
+			_mediaDiscoverers.Clear();
 		}
-		_mediaDiscoverers.Clear();
+		catch (Exception ex)
+		{
+			Debug.LogError(ex.ToString());
+			throw;
+		}
 	}
 
 }
