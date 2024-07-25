@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Web;
 using Google.XR.Cardboard;
 using LibVLCSharp;
 using UnityEngine;
@@ -182,14 +183,16 @@ public class VrPlayerController : MonoBehaviour
 		}
 		catch (Exception ex)
 		{
-			Debug.LogError($"Cant open <{mediaPlayer.Media.Mrl}> : {ex.Message}");
+			var decodedUrl = HttpUtility.UrlDecode(mediaPlayer.Media.Mrl);
+			Debug.LogError($"Cant open <{decodedUrl}> : {ex.Message}");
 		}
 
 	}
 
 	public void Open(Media media, bool autoPlay = true)
 	{
-		Debug.Log($"Open Media <{media.Mrl}>");
+		var decodedUrl = HttpUtility.UrlDecode(media.Mrl);
+		Debug.Log($"Open Media <{decodedUrl}>");
 		//if (mediaPlayer.Media != null)
 		//	mediaPlayer.Media.Dispose();
 

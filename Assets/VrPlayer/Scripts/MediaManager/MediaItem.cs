@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using LibVLCSharp;
 using UnityEngine;
 
@@ -86,31 +87,6 @@ public class MediaItem
 			}
 		};
 
-
-		if (media.Type == MediaType.File)
-		{
-			if (!IsThumbnailCached)
-			{
-				media.ThumbnailGenerated += (x, e) =>
-				{
-					try
-					{
-						if (e.Thumbnail == null) return;
-						var path = GetThumbnailCachePath(media);
-						e.Thumbnail.Save(path);
-						e.Thumbnail.Dispose();
-						Debug.Log($"[YAVR]: Thumbnail Generated <{name}>");
-					}
-					catch (Exception ex)
-					{
-						Debug.LogError($"[YAVR] ThumbnailGenerated : " + ex.Message);
-					}
-				};
-
-
-			}
-		}
-
 		media.ParsedChanged += (x, e) =>
 		{
 			//Debug.Log($"MI {name} : ParsedChanged {e.ParsedStatus}");
@@ -159,11 +135,12 @@ public class MediaItem
 		{
 			try
 			{
+				// последовательно парсим каждый элемент
 				foreach (var subMI in listSubMI)
 				{
 					if (ct.IsCancellationRequested) return;
-					var subTask = subMI.StartParse(updateThumbs);
-					subTask.Wait();
+					var miParseTask = subMI.StartParse(updateThumbs);
+					miParseTask.Wait();
 				}
 			}
 			catch (Exception) { }
@@ -188,18 +165,26 @@ public class MediaItem
 		if (parseInProgress) return Task.CompletedTask;
 		parseInProgress = true;
 
-		var parseTask = Task.Factory.StartNew(() =>
+		var rootTask = Task.Factory.StartNew(() =>
 			{
 				try
 				{
 					var mode = isNetwork ? MediaParseOptions.FetchNetwork : MediaParseOptions.FetchLocal;
-					var task = media.ParseAsync(VrPlayerController.libVLC, mode);
-					task.Wait();
+					var parseTask = media.ParseAsync(VrPlayerController.libVLC, mode);
+					parseTask.Wait();
 
 					if (!isFolder && updateThumbs && !IsThumbnailCached)
 					{
-						var task2 = RunGenerateThumbnail();
-						task2.Wait();
+						var thumbTask = RunGenerateThumbnail();
+						thumbTask.Wait();
+						var pic = thumbTask.Result;
+						if (pic != null)
+						{
+							var path = GetThumbnailCachePath(media);
+							pic.Save(path);
+							pic.Dispose();
+							Debug.Log($"[YAVR]: Thumbnail Generated <{name}>");
+						}
 					}
 
 				}
@@ -212,7 +197,7 @@ public class MediaItem
 
 		parseInProgress = false;
 
-		return parseTask;
+		return rootTask;
 	}
 
 	private void UpdateMediaInfoStr()
@@ -274,17 +259,19 @@ public class MediaItem
 
 	}
 
-	private Task RunGenerateThumbnail()
+	private Task<Picture> RunGenerateThumbnail()
 	{
 		//- calc aspect for thumbnail
-
 		var aspect = w / (float)h;
 		w = 250;
 		h = (uint)(w / aspect);
 
 		//- media should be parsed at this moment
-		var time = (int)(media.Duration * 0.4f);
-		return media.GenerateThumbnailAsync(VrPlayerController.libVLC, time, ThumbnailerSeekSpeed.Fast, w, h, false, PictureType.Png);
+
+		Debug.Log($"[YAVR]: Attempt Generate Thumbnail for <{name}>");
+		var snapTime = (int)(media.Duration * 0.4f);
+		var task = media.GenerateThumbnailAsync(VrPlayerController.libVLC, snapTime, ThumbnailerSeekSpeed.Fast, w, h, false, PictureType.Png);
+		return task;
 	}
 
 

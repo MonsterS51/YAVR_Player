@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -329,7 +330,8 @@ public class FilesPanelScript : MonoBehaviour
 	public void TrySetLastState()
 	{
 
-		Debug.Log("Try Set LastFile: " + vpCon.sd.LastFile);
+		var decodedUrl = HttpUtility.UrlDecode(vpCon.sd.LastFile);
+		Debug.Log("Try Set LastFile: " + decodedUrl);
 
 		if (string.IsNullOrWhiteSpace(vpCon.sd?.LastFile))
 		{
@@ -363,8 +365,9 @@ public class FilesPanelScript : MonoBehaviour
 			var curFolder = uriSeg.Trim('\\', '/');
 			if (string.IsNullOrWhiteSpace(curFolder)) continue;
 
-			Debug.Log($" > Try Open: {curFolder}");
-			uiCon.SetMessageText($"Try Open: {curFolder}");
+			var decodedUrl = HttpUtility.UrlDecode(curFolder);
+			Debug.Log($" > Try Open: {decodedUrl}");
+			uiCon.SetMessageText($"Try Open: {decodedUrl}");
 
 			if (uiCon.curFolderMI != null)
 			{

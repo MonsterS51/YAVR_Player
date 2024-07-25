@@ -1,72 +1,36 @@
 {
     "m_SelectedDeviceId": "65a155e1",
-    "m_SelectedPackage": {
-        "deviceId": "65a155e1",
-        "name": "com.MonsterNest.YAVRPlayer",
-        "processId": 27770,
+    "m_SelectedProcess": {
+        "deviceId": "",
+        "name": "",
+        "processId": 0,
         "exited": false
     },
     "m_SelectedPriority": 0,
-    "m_KnownPackagesForSerialization": [
-        {
-            "deviceId": "44352e62",
-            "name": "ch.deletescape.lawnchair.plah",
-            "processId": 3470,
-            "exited": false
-        },
-        {
-            "deviceId": "44352e62",
-            "name": "com.MonsterNetst.YAVR_Player",
-            "processId": 26508,
-            "exited": true
-        },
-        {
-            "deviceId": "44352e62",
-            "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 10608,
-            "exited": false
-        },
-        {
-            "deviceId": "44352e62",
-            "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 17042,
-            "exited": false
-        },
+    "m_KnownProcessesForSerialization": [
         {
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 20953,
+            "processId": 2115,
             "exited": true
         },
         {
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 21628,
+            "processId": 3064,
             "exited": true
         },
         {
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 23783,
+            "processId": 3945,
             "exited": true
         },
         {
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 24703,
+            "processId": 9257,
             "exited": true
-        },
-        {
-            "deviceId": "65a155e1",
-            "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 26578,
-            "exited": false
-        },
-        {
-            "deviceId": "65a155e1",
-            "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 27770,
-            "exited": false
         }
     ],
     "m_Tags": {
@@ -101,8 +65,11 @@
             }
         ]
     },
+    "m_ExtraWindowState": {
+        "Type": 0,
+        "Height": 0.0
+    },
     "m_MemoryViewerState": {
-        "MemoryWindowHeight": 300.0,
         "MemoryWindowWidth": 170.0,
         "MemoryTypeEnabled": [
             true,
@@ -117,7 +84,7 @@
             true
         ],
         "MemoryGroup": 2,
-        "Behavior": 0
+        "AutoCapture": true
     },
     "m_FilterOptions": {
         "m_Filter": "",
@@ -135,5 +102,17 @@
         "BitRateK": 20000,
         "DisplayIdEnabled": false,
         "DisplayId": ""
-    }
+    },
+    "m_InputSettings": {
+        "ShiftModifier": false,
+        "SendText": "",
+        "PosixKillSignal": 0,
+        "TargetProcess": {
+            "deviceId": "",
+            "name": "",
+            "processId": 0,
+            "exited": false
+        }
+    },
+    "m_AutoScroll": 0
 }
