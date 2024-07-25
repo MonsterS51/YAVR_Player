@@ -70,7 +70,7 @@ public class UiController : MonoBehaviour
 	public void OpenMediaFile(MediaItem mi, bool autoPlay = true)
 	{
 		//- parse for info string
-		mi.StartParse(false);
+		mi.StartParse();
 
 		var lowName = mi.name.ToLower();
 
@@ -88,24 +88,6 @@ public class UiController : MonoBehaviour
 		vpCon.Open(mi.media, autoPlay);
 		curPlayedMI = mi;
 		mps.UpdateTitle(mi);
-	}
-
-	public void ClearThumbnailsCache()
-	{
-		try
-		{
-			var di = new DirectoryInfo(MediaItem.thumbsCachePath);
-			if (!di.Exists) return;
-			foreach (var file in di.GetFiles())
-			{
-				file.Delete();
-			}
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("[YAVR] Failed Clear Thumbnails Cache : " + ex.Message);
-		}
-
 	}
 
 	///<summary> Play next/prev file from current folder. </summary>

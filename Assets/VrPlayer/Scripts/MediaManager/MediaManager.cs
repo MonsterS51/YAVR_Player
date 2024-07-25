@@ -11,7 +11,7 @@ public class MediaManager
 
 
 	public LibVLC _libVLC;
-	List<MediaDiscoverer> _mediaDiscoverers = new();
+	private List<MediaDiscoverer> _mediaDiscoverers = new();
 
 	public void InitializeMediaDiscoverers()
 	{

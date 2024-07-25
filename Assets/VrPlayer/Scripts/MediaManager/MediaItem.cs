@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using LibVLCSharp;
 using UnityEngine;
+
 
 public class MediaItem
 {
@@ -16,7 +16,6 @@ public class MediaItem
 	public Media media = null;
 	public List<MediaItem> listSubMI = new();
 	public MediaItem parentMI = null;
-	private Texture2D thumbnail = null;
 	public float lastScrollPos = 1f;
 	public string mediaInfo = string.Empty;
 
@@ -29,7 +28,7 @@ public class MediaItem
 	{
 		isFolder = media.Type == MediaType.Directory;
 		this.media = media;
-		name = MediaName;
+		name = Path.GetFileNameWithoutExtension(MediaName)?.Replace('_', ' ');
 		this.parentMI = parentMI;
 
 		SetMediaEvents(media);
@@ -121,7 +120,7 @@ public class MediaItem
 	public bool parseInProgress = false;
 	public bool parseChildInProgress = false;
 
-	public void StartParseChildMedia(bool updateThumbs = false)
+	public void StartParseChildMedia()
 	{
 		if (parseChildInProgress) return;
 		parseChildInProgress = true;
@@ -139,7 +138,7 @@ public class MediaItem
 				foreach (var subMI in listSubMI)
 				{
 					if (ct.IsCancellationRequested) return;
-					var miParseTask = subMI.StartParse(updateThumbs);
+					var miParseTask = subMI.StartParse();
 					miParseTask.Wait();
 				}
 			}
@@ -160,7 +159,7 @@ public class MediaItem
 	}
 
 
-	public Task StartParse(bool updateThumbs = false)
+	public Task StartParse()
 	{
 		if (parseInProgress) return Task.CompletedTask;
 		parseInProgress = true;
@@ -172,26 +171,10 @@ public class MediaItem
 					var mode = isNetwork ? MediaParseOptions.FetchNetwork : MediaParseOptions.FetchLocal;
 					var parseTask = media.ParseAsync(VrPlayerController.libVLC, mode);
 					parseTask.Wait();
-
-					if (!isFolder && updateThumbs && !IsThumbnailCached)
-					{
-						var thumbTask = RunGenerateThumbnail();
-						thumbTask.Wait();
-						var pic = thumbTask.Result;
-						if (pic != null)
-						{
-							var path = GetThumbnailCachePath(media);
-							pic.Save(path);
-							pic.Dispose();
-							Debug.Log($"[YAVR]: Thumbnail Generated <{name}>");
-						}
-					}
-
 				}
 				catch (Exception e)
 				{
-					Debug.LogError($"StartParse : {name} : {e.Message}");
-
+					Debug.LogError($"{nameof(StartParse)} : {name} : {e.Message}");
 				}
 			});
 
@@ -202,9 +185,10 @@ public class MediaItem
 
 	private void UpdateMediaInfoStr()
 	{
-		if (isFolder) {
+		if (isFolder)
+		{
 			mediaInfo = $"{listSubMI.Where(x => !x.isFolder).Count()} video";
-			return; 
+			return;
 		}
 
 
@@ -217,7 +201,8 @@ public class MediaItem
 		{
 			w = trackList[0].Data.Video.Width;
 			h = trackList[0].Data.Video.Height;
-			mediaInfo += $"[{w}x{h}] ";
+			var fps = trackList[0].Data.Video.FrameRateNum / trackList[0].Data.Video.FrameRateDen;
+			mediaInfo += $"[{w}x{h}:{fps}]";
 		}
 		trackList.Dispose();
 
@@ -228,89 +213,10 @@ public class MediaItem
 		var dur = VrPlayerController.GetFormatedTimeStr(media.Duration);
 		var size = (fSize / 1024) / 1024;
 		var sizeStr = size < 1024 ? $"{size} Mb" : $"{String.Format("{0:0.00}", size / 1024f)} Gb";
-		mediaInfo += $"<{dur}>  <{sizeStr}>  <{modDate.ToString("dd.MM.yyyy")}>";
+		mediaInfo += $" <{dur}>  <{sizeStr}>  <{modDate.ToString("dd.MM.yyyy")}>";
 
 	}
 
-
-	#endregion
-
-	//---
-
-	#region Thumbnail Gen
-
-	public Texture2D GetThumbnailFromCache()
-	{
-		if (thumbnail != null) return thumbnail;
-
-		try
-		{
-			var path = GetThumbnailCachePath(media);
-			if (!File.Exists(path)) return null;
-			thumbnail ??= LoadPNG(path);
-			return thumbnail;
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError($"[YAVR] GetThumbnail : Error !");
-			Debug.LogException(ex);
-			return null;
-		}
-
-	}
-
-	private Task<Picture> RunGenerateThumbnail()
-	{
-		//- calc aspect for thumbnail
-		var aspect = w / (float)h;
-		w = 250;
-		h = (uint)(w / aspect);
-
-		//- media should be parsed at this moment
-
-		Debug.Log($"[YAVR]: Attempt Generate Thumbnail for <{name}>");
-		var snapTime = (int)(media.Duration * 0.4f);
-		var task = media.GenerateThumbnailAsync(VrPlayerController.libVLC, snapTime, ThumbnailerSeekSpeed.Fast, w, h, false, PictureType.Png);
-		return task;
-	}
-
-
-	public static string thumbsCachePath = VrPlayerController.cachePath + $"/thumbs/";
-
-	private static string GetThumbnailCachePath(Media media)
-	{
-		Directory.CreateDirectory(thumbsCachePath);
-		var hash = media.Mrl.ToLower().GetHashCode();
-		var path = VrPlayerController.cachePath + $"/thumbs/{hash}";
-		return path;
-	}
-
-
-	private static Texture2D LoadPNG(string filePath)
-	{
-
-		Texture2D tex = null;
-		byte[] fileData;
-
-		if (File.Exists(filePath))
-		{
-			fileData = File.ReadAllBytes(filePath);
-			tex = new Texture2D(2, 2, TextureFormat.RGBA32, true);
-			tex.filterMode = FilterMode.Trilinear;
-			tex.anisoLevel = 8;
-			tex.LoadImage(fileData);
-		}
-		return tex;
-	}
-
-	private bool IsThumbnailCached
-	{
-		get
-		{
-			var path = GetThumbnailCachePath(media);
-			return File.Exists(path);
-		}
-	}
 
 	#endregion
 

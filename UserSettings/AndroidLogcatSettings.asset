@@ -11,18 +11,6 @@
         {
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 2115,
-            "exited": true
-        },
-        {
-            "deviceId": "65a155e1",
-            "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 3064,
-            "exited": true
-        },
-        {
-            "deviceId": "65a155e1",
-            "name": "com.MonsterNest.YAVRPlayer",
             "processId": 3945,
             "exited": true
         },
@@ -30,6 +18,18 @@
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
             "processId": 9257,
+            "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 14716,
+            "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 15519,
             "exited": true
         }
     ],
@@ -114,5 +114,5 @@
             "exited": false
         }
     },
-    "m_AutoScroll": 0
+    "m_AutoScroll": 2
 }

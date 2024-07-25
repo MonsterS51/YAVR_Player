@@ -1,5 +1,4 @@
-﻿using System.Timers;
-using LibVLCSharp;
+﻿using LibVLCSharp;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -29,8 +28,8 @@ public class MainPanelScript : MonoBehaviour
 	void Start()
 	{
 		playButton.GetComponent<Button>().onClick.AddListener(() => PlayPauseBtnPush());
-		stopButton.GetComponent<Button>().onClick.AddListener(() => Stop() );
-		seekPrevButton.GetComponent<Button>().onClick.AddListener(() => uiCon.Seek(false) );
+		stopButton.GetComponent<Button>().onClick.AddListener(() => Stop());
+		seekPrevButton.GetComponent<Button>().onClick.AddListener(() => uiCon.Seek(false));
 		seekForwardButton.GetComponent<Button>().onClick.AddListener(() => uiCon.Seek(true));
 		nextFileButton.GetComponent<Button>().onClick.AddListener(() => uiCon.PlayNextFile());
 		prevFileButton.GetComponent<Button>().onClick.AddListener(() => uiCon.PlayNextFile(true));
@@ -39,10 +38,7 @@ public class MainPanelScript : MonoBehaviour
 		var seekBarEvents = progressBar.GetComponent<EventTrigger>();
 		EventTrigger.Entry seekBarPointerDown = new();
 		seekBarPointerDown.eventID = EventTriggerType.PointerDown;
-		seekBarPointerDown.callback.AddListener((data) =>
-		{
-			_isDraggingSeekBar = true;
-		});
+		seekBarPointerDown.callback.AddListener((data) => { _isDraggingSeekBar = true; });
 		seekBarEvents.triggers.Add(seekBarPointerDown);
 
 		EventTrigger.Entry seekBarPointerUp = new();
@@ -80,7 +76,7 @@ public class MainPanelScript : MonoBehaviour
 	public void UpdateTitle(MediaItem mi)
 	{
 		if (mi?.media == null) return;
-		var title = mi.media.Meta(MetadataType.Title);
+		var title = mi.name;
 		mediaTitle.GetComponent<TextMeshProUGUI>().SetText(title);
 		SetMediaInfoText(mi.mediaInfo);
 	}
@@ -130,7 +126,8 @@ public class MainPanelScript : MonoBehaviour
 	public void SetMessageText(string text)
 	{
 		if (string.IsNullOrWhiteSpace(text)) msgText.SetActive(false);
-		else {
+		else
+		{
 			var tmp = msgText.GetComponentInChildren<TextMeshProUGUI>();
 			if (tmp != null) tmp.text = text;
 			msgText.SetActive(true);

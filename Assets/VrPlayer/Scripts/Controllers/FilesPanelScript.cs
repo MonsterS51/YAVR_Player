@@ -95,7 +95,6 @@ public class FilesPanelScript : MonoBehaviour
 					UpdateFileButtonInfoLine(fileBtn.gameObject, subMi.mediaInfo);
 
 					if (subMi.isFolder) continue;
-					UpdateFileButtonThumbnail(fileBtn.gameObject, subMi.GetThumbnailFromCache());
 
 					if (vpCon.mediaPlayer != null && vpCon.mediaPlayer.Media != null)
 					{
@@ -142,28 +141,6 @@ public class FilesPanelScript : MonoBehaviour
 		if (uiCon.curFolderMI != null) StartCoroutine(SetLastScrollPosCoroutine());
 	}
 
-	///<summary> Update the preview texture on the file button. </summary>
-	private void UpdateFileButtonThumbnail(GameObject go, Texture2D thumbTex)
-	{
-		if (thumbTex == null) return;
-
-		//- hide icon
-		var iconimage = go.transform.Find("IconFolder");
-		iconimage.gameObject.SetActive(false);
-		iconimage = go.transform.Find("IconFile");
-		iconimage.gameObject.SetActive(false);
-
-		//- show thumbnail
-		var thumbImage = go.transform.Find("Thumbnail");
-		thumbImage.gameObject.SetActive(true);
-		var rawImage = thumbImage?.GetComponent<RawImage>();
-		if (rawImage != null && rawImage.texture != thumbTex)
-		{
-			rawImage.texture = thumbTex;
-		}
-
-	}
-
 	///<summary> Update info line, if needed. </summary>
 	private void UpdateFileButtonInfoLine(GameObject go, string text)
 	{
@@ -206,8 +183,6 @@ public class FilesPanelScript : MonoBehaviour
 			iconimage = newButton.transform.Find("IconFile");
 			iconimage.gameObject.SetActive(true);
 		}
-
-		UpdateFileButtonThumbnail(newButton, mi.GetThumbnailFromCache());
 
 		return newButton;
 	}
@@ -264,7 +239,9 @@ public class FilesPanelScript : MonoBehaviour
 	{
 		uiCon.SetMessageText($"Open Folder: {mi.name}");
 		ClearFilesContentPanel();
-		currentFolderTitle.GetComponent<TextMeshProUGUI>().text = mi.name;
+
+		var header = $"{mi.name} ({mi.listSubMI.Count} ent)";
+		currentFolderTitle.GetComponent<TextMeshProUGUI>().text = header;
 
 		var parseTask = mi.StartParse();
 		while (parseTask.Status == TaskStatus.Running ||
@@ -275,7 +252,7 @@ public class FilesPanelScript : MonoBehaviour
 			yield return new WaitForSeconds(.1f);
 
 		//- start parse all sub items
-		mi.StartParseChildMedia(!mi.isNetwork);
+		mi.StartParseChildMedia();
 
 		RefillFilesPanel();
 		UiUpdate();
@@ -315,7 +292,7 @@ public class FilesPanelScript : MonoBehaviour
 			yield return new WaitForSeconds(.1f);
 
 		//- start parse all sub items - only for thumbnail
-		mi.StartParseChildMedia(true);
+		mi.StartParseChildMedia();
 
 		RefillFilesPanel();
 		UiUpdate();
@@ -371,7 +348,7 @@ public class FilesPanelScript : MonoBehaviour
 
 			if (uiCon.curFolderMI != null)
 			{
-				var task = uiCon.curFolderMI.StartParse(false);
+				var task = uiCon.curFolderMI.StartParse();
 				while (task.Status == TaskStatus.Running ||
 					task.Status == TaskStatus.Created ||
 					task.Status == TaskStatus.WaitingToRun ||

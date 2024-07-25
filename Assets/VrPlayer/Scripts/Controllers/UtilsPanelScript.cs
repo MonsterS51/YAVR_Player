@@ -14,7 +14,6 @@ public class UtilsPanelScript : MonoBehaviour
 	public UiController uiCon;
 
 	[Header("VR")]
-	public GameObject clearThumbBtn;
 	public GameObject Btn180;
 	public GameObject Btn360;
 	public GameObject BtnSBS;
@@ -42,8 +41,6 @@ public class UtilsPanelScript : MonoBehaviour
 
 	void Start()
 	{
-		clearThumbBtn.GetComponent<Button>().onClick.AddListener(() => { uiCon.ClearThumbnailsCache(); });
-
 		BtnSBS.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetVideoLayout(VrPlayerController.StereoMode.SBS); });
 		BtnOU.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetVideoLayout(VrPlayerController.StereoMode.OU); });
 		BtnNone.GetComponent<Button>().onClick.AddListener(() => { vpCon.SetVideoLayout(VrPlayerController.StereoMode.None); });
