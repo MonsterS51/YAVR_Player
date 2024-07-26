@@ -5,6 +5,7 @@ using System.Linq;
 using Google.XR.Cardboard;
 using UnityEngine;
 using UnityEngine.UI;
+using static StereoVrManager;
 
 public class UiController : MonoBehaviour
 {
@@ -23,12 +24,9 @@ public class UiController : MonoBehaviour
 
 	void Start()
 	{
-
 		utilsCanvas.transform.LookAt(Camera.main.transform);
 		var q = utilsCanvas.transform.rotation;
 		utilsCanvas.transform.rotation = Quaternion.Euler(0, q.eulerAngles.y + 180, 0);
-
-
 
 		lowToggleUiBtn.GetComponent<Button>().onClick.AddListener(() => { ToogleUi(); });
 		lowRecenterBtn.GetComponent<Button>().onClick.AddListener(() => { StartCoroutine(RecenterTimed()); });
@@ -72,17 +70,12 @@ public class UiController : MonoBehaviour
 		//- parse for info string
 		mi.StartParse();
 
-		var lowName = mi.name.ToLower();
-
 		//- auto detect VR video type by name
-		if (lowName.Contains("360")) vpCon.SetImageType(true);
-		else vpCon.SetImageType(false);
-		if (lowName.Contains("_ou")) vpCon.SetVideoLayout(VrPlayerController.StereoMode.OU);
-		else vpCon.SetVideoLayout(VrPlayerController.StereoMode.SBS);
+		vpCon.svm.SetModeByFileName(mi.name.ToLower());
 
 		curFolderMI?.CancelParseChildMedia();
 
-		vpCon.sd.LastFile = mi.media.Mrl;
+		VrPlayerController.sdm.sd.LastFile = mi.media.Mrl;
 
 		vpCon.Stop();
 		vpCon.Open(mi.media, autoPlay);
@@ -147,8 +140,8 @@ public class UiController : MonoBehaviour
 
 	public void AddZoom(bool positive = true)
 	{
-		vpCon.AddZoom(positive);
-		mps.SetMessageText($"Zoom {(positive ? "+" : "-")}");
+		vpCon.svm.AddZoom(positive);
+		mps.SetMessageText($"Zoom {vpCon.svm.ZoomPercent} {(positive ? "+" : "-")}");
 	}
 
 }

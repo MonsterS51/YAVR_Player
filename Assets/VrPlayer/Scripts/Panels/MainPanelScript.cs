@@ -45,7 +45,11 @@ public class MainPanelScript : MonoBehaviour
 		seekBarPointerUp.eventID = EventTriggerType.PointerUp;
 		seekBarPointerUp.callback.AddListener((data) =>
 		{
-			if (vpCon.mediaPlayer.IsPlaying) vpCon?.SetPosition(progressBar.value);
+			if (vpCon.mediaPlayer.IsPlaying) {
+				Utils.Vibrate();
+				vpCon?.SetPosition(progressBar.value);
+				
+			}
 			_isDraggingSeekBar = false;
 		});
 		seekBarEvents.triggers.Add(seekBarPointerUp);
@@ -110,10 +114,10 @@ public class MainPanelScript : MonoBehaviour
 	{
 		if (vpCon.mediaPlayer?.Media == null) return;
 		var totTime = vpCon.mediaPlayer.Media.Duration;
-		totalTime.GetComponent<TextMeshProUGUI>().SetText(VrPlayerController.GetFormatedTimeStr(totTime));
+		totalTime.GetComponent<TextMeshProUGUI>().SetText(Utils.GetFormatedTimeStr(totTime));
 
 		var curTime = vpCon.mediaPlayer.Time;
-		currentTime.GetComponent<TextMeshProUGUI>().SetText(VrPlayerController.GetFormatedTimeStr(curTime));
+		currentTime.GetComponent<TextMeshProUGUI>().SetText(Utils.GetFormatedTimeStr(curTime));
 	}
 
 	public void ClearMediaTime()

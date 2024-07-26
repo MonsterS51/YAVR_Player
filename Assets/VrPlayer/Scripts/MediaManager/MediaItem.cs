@@ -211,7 +211,7 @@ public class MediaItem
 		media.FileStat(FileStat.Mtime, out var mTime);
 		var refPoint = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 		var modDate = refPoint.AddSeconds(mTime);
-		var dur = VrPlayerController.GetFormatedTimeStr(media.Duration);
+		var dur = Utils.GetFormatedTimeStr(media.Duration);
 		var size = (fSize / 1024) / 1024;
 		var sizeStr = size < 1024 ? $"{size} Mb" : $"{String.Format("{0:0.00}", size / 1024f)} Gb";
 		mediaInfo += $" <{dur}>  <{sizeStr}>  <{modDate.ToString("dd.MM.yyyy")}>";

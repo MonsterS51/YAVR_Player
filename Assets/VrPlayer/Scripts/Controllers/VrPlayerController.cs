@@ -14,7 +14,6 @@ public class VrPlayerController : MonoBehaviour
 	public MediaPlayer mediaPlayer;	//MediaPlayer is the main class we use to interact with VLC
 
 	public GameObject sphere;
-	private Material sphereMat;
 
 	//Screens
 	public Renderer screen;					//Assign a mesh to render on a 3d object
@@ -31,20 +30,17 @@ public class VrPlayerController : MonoBehaviour
 	public bool automaticallyFlipOnAndroid = true;	//Automatically invert Y on Android
 
 	public MediaManager mm = new();
-
-	public static string cachePath;
+	public static SaveDataManager sdm = new();
+	public StereoVrManager svm = new();
 
 	#region Unity
 
 	void Awake()
 	{
-		LoadData();
+		sdm.LoadData($"{Application.persistentDataPath}/save_data.json");
 
-		sphereMat = sphere.GetComponent<MeshRenderer>().material;
-		sphereMat.mainTexture = Texture2D.blackTexture;
-
-		cachePath = Application.temporaryCachePath;
-
+		svm.SetSphereMaterial(sphere);
+		svm.SetSphereBlack();
 
 		// 0 + 60			=> держит условно плавные 60fps даже при 120Hz, при тротлинге начинает жестко дропать до 20fps
 		// 0 или 1 + 120	=> если больше 60Hz - картинка дергается, при ручном снижении частоты экрана до 60Hz - плавно до тротлинга
@@ -67,10 +63,10 @@ public class VrPlayerController : MonoBehaviour
 		Debug.Log($"LibVLC:{libVLC.Version}  ABI:{libVLC.ABI}");
 
 		//Setup Screen
-		if (screen == null)
-			screen = GetComponent<Renderer>();
-		if (canvasScreen == null)
-			canvasScreen = GetComponent<RawImage>();
+		//if (screen == null)
+		//	screen = GetComponent<Renderer>();
+		//if (canvasScreen == null)
+		//	canvasScreen = GetComponent<RawImage>();
 
 		//Automatically flip on android
 		if (automaticallyFlipOnAndroid && Application.platform == RuntimePlatform.Android)
@@ -85,7 +81,7 @@ public class VrPlayerController : MonoBehaviour
 
 	void OnDestroy()
 	{
-		SaveData();
+		sdm.SaveData();
 
 		mm.Dispose();
 
@@ -147,7 +143,7 @@ public class VrPlayerController : MonoBehaviour
 		if (!hasFocus)
 		{
 			mediaPlayer?.SetPause(true);
-			SaveData();
+			sdm.SaveData();
 		}
 	}
 
@@ -156,7 +152,7 @@ public class VrPlayerController : MonoBehaviour
 		if (pauseStatus)
 		{
 			mediaPlayer?.SetPause(true);
-			SaveData();
+			sdm.SaveData();
 		}
 	}
 
@@ -228,7 +224,7 @@ public class VrPlayerController : MonoBehaviour
 		mediaPlayer?.Stop();
 		_vlcTexture = null;
 		rt = null;
-		sphereMat.mainTexture = Texture2D.blackTexture;
+		svm.SetSphereBlack();
 	}
 
 	public void Seek(long timeDelta)
@@ -248,8 +244,7 @@ public class VrPlayerController : MonoBehaviour
 	{
 		if (!mediaPlayer.IsSeekable) return;
 		Debug.Log($"{nameof(SetPosition)} : {posPercent}");
-		var result = mediaPlayer?.SetPosition(posPercent);
-		Debug.Log($"{nameof(SetPosition)} : {result}");
+		mediaPlayer?.SetPosition(posPercent);
 	}
 
 	public void AddVolume(int volume)
@@ -265,7 +260,7 @@ public class VrPlayerController : MonoBehaviour
 		var newVol = volume;
 		newVol = Mathf.Clamp(newVol, 0, 100);
 		mediaPlayer.SetVolume(newVol);
-		if (sd != null) sd.Volume = newVol;
+		if (sdm?.sd != null) sdm.sd.Volume = newVol;
 	}
 
 	public bool IsPlaying
@@ -343,7 +338,7 @@ public class VrPlayerController : MonoBehaviour
 
 		// опции вращения через фильтры тормозят - "--video-filter=rotate", "--rotate-angle=180"
 
-		var options = new string[] { $"--smb-user={sd.NetLogin}", $"--smb-pwd={sd.NetPass}", "--input-repeat=9999" };
+		var options = new string[] { $"--smb-user={sdm.sd.NetLogin}", $"--smb-pwd={sdm.sd.NetPass}", "--input-repeat=9999" };
 
 		libVLC = new LibVLC(enableDebugLogs: _debugLogs, options);
 		//You can customize LibVLC with advanced CLI options here https://wiki.videolan.org/VLC_command-line_help/
@@ -379,7 +374,7 @@ public class VrPlayerController : MonoBehaviour
 		mediaPlayer.NetworkCaching = 1000;
 
 		mediaPlayer.SetVolume(100);
-		if (sd != null) mediaPlayer.SetVolume(sd.Volume);
+		if (sdm?.sd != null) mediaPlayer.SetVolume(sdm.sd.Volume);
 
 		Resources.UnloadUnusedAssets();
 	}
@@ -461,108 +456,16 @@ public class VrPlayerController : MonoBehaviour
 			if (canvasScreen != null)
 				canvasScreen.texture = rt;
 
-			sphereMat.mainTexture = rt;
+			svm.SetSphereTexture(rt);
 		}
 	}
 
 	public void ClearOutRenderTexture(RenderTexture renderTexture)
 	{
-		RenderTexture rt = RenderTexture.active;
+		var rt = RenderTexture.active;
 		RenderTexture.active = renderTexture;
 		GL.Clear(true, true, Color.black);
 		RenderTexture.active = rt;
-	}
-
-	#endregion
-
-	//---
-
-	#region Player Util
-
-
-	public enum StereoMode
-	{
-		None = 0,
-		SBS = 1,
-		OU = 2
-	}
-
-	public void SetVideoLayout(StereoMode mode)
-	{
-		sphereMat.SetFloat("_Layout", (float)mode);
-	}
-
-	public void SetImageType(bool is360)
-	{
-		if (is360)
-		{
-			sphereMat.SetFloat("_Rotation", 90f);
-			sphereMat.SetFloat("_ImageType", 0f);
-		}
-		else
-		{
-			sphereMat.SetFloat("_Rotation", 0f);
-			sphereMat.SetFloat("_ImageType", 1f);
-		}
-	}
-
-	public static string GetFormatedTimeStr(long timeMs)
-	{
-		var timespan = TimeSpan.FromMilliseconds(timeMs);
-		string totalStr;
-		if (timespan.TotalHours >= 1)
-			totalStr = string.Format("{0:D2}:{1:D2}:{2:D2}", timespan.Hours, timespan.Minutes, timespan.Seconds);
-		else
-			totalStr = string.Format("{0}:{1:00}", (int)timespan.TotalMinutes, timespan.Seconds);
-		return totalStr;
-	}
-
-	public void AddZoom(bool positive = true)
-	{
-		var size = sphere.transform.localScale.z;
-		var posV = sphere.transform.position;
-		var step = size * 0.01f;
-		posV.z += positive ? -step : step;
-		posV.z = Mathf.Clamp(posV.z, -size * 0.5f, size * 0.5f);
-		sphere.transform.position = posV;
-	}
-
-	public void ResetZoom()
-	{
-		var posV = sphere.transform.position;
-		posV.z = 0;
-		sphere.transform.position = posV;
-	}
-
-	public static void Vibrate()
-	{
-		Vibration.Vibrate(20);
-		Debug.Log("Vibrate");
-	}
-
-	#endregion
-
-	//---
-
-	#region Save/Load Data
-
-	public SaveData sd;
-	private void LoadData()
-	{
-		if (!File.Exists(UtilSerial.savePath))
-		{
-			sd = new();
-			return;
-		}
-
-		sd = UtilSerial.ReadJson<SaveData>(UtilSerial.savePath);
-		sd ??= new();
-	}
-
-	private void SaveData()
-	{
-		if (sd == null) return;
-		UtilSerial.WriteJson(sd, UtilSerial.savePath);
 	}
 
 	#endregion

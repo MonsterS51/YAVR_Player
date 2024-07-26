@@ -26,7 +26,7 @@ public class FilesPanelScript : MonoBehaviour
 	public GameObject textFPS;
 
 	//- fps
-	[SerializeField] private float _fpsRefreshRate = 0.2f;
+	[SerializeField] private float _fpsRefreshRate = 0.5f;
 	private float _fpsTimer;
 
 	void Start()
@@ -204,11 +204,13 @@ public class FilesPanelScript : MonoBehaviour
 	///<summary> Remember last scroll pos. </summary>
 	private void RememberScrollPos()
 	{
+		if (OpenFolderInProgress) return;		// избегаем сброса при смене содержимого
 		if (uiCon.curFolderMI == null) return;
 		uiCon.curFolderMI.lastScrollPos = contentScrollBar.GetComponent<Scrollbar>().value;
+		//Debug.LogWarning($"SaveScrollPos: {uiCon.curFolderMI} : {uiCon.curFolderMI.lastScrollPos}");
 
-		if (vpCon.sd == null) return;
-		vpCon.sd.FilesListScroll = uiCon.curFolderMI.lastScrollPos;
+		if (VrPlayerController.sdm.sd == null) return;
+		VrPlayerController.sdm.sd.FilesListScroll = uiCon.curFolderMI.lastScrollPos;
 	}
 
 
@@ -233,10 +235,13 @@ public class FilesPanelScript : MonoBehaviour
 		yield return new WaitForEndOfFrame();
 		if (uiCon.curFolderMI == null) scrollRectGo.verticalNormalizedPosition = 1f;
 		scrollRectGo.verticalNormalizedPosition = uiCon.curFolderMI.lastScrollPos;
+		//Debug.LogWarning($"SetScrollPos: {uiCon.curFolderMI} : {uiCon.curFolderMI.lastScrollPos}");
 	}
 
+	private bool OpenFolderInProgress = false;
 	private IEnumerator OpenFolderCoroutine(MediaItem mi)
 	{
+		OpenFolderInProgress = true;
 		uiCon.SetMessageText($"Open Folder: {mi.name}");
 		ClearFilesContentPanel();
 
@@ -256,6 +261,7 @@ public class FilesPanelScript : MonoBehaviour
 
 		RefillFilesPanel();
 		UiUpdate();
+		OpenFolderInProgress = false;
 	}
 
 
@@ -307,10 +313,10 @@ public class FilesPanelScript : MonoBehaviour
 	public void TrySetLastState()
 	{
 
-		var decodedUrl = HttpUtility.UrlDecode(vpCon.sd.LastFile);
+		var decodedUrl = HttpUtility.UrlDecode(VrPlayerController.sdm.sd.LastFile);
 		Debug.Log("Try Set LastFile: " + decodedUrl);
 
-		if (string.IsNullOrWhiteSpace(vpCon.sd?.LastFile))
+		if (string.IsNullOrWhiteSpace(VrPlayerController.sdm.sd?.LastFile))
 		{
 			currentFolderTitle.GetComponent<TextMeshProUGUI>().text = "Root";
 			RefreshContent();
@@ -327,7 +333,7 @@ public class FilesPanelScript : MonoBehaviour
 		fileCanvas.SetActive(false);
 
 
-		var folderUri = new Uri(vpCon.sd.LastFile);
+		var folderUri = new Uri(VrPlayerController.sdm.sd.LastFile);
 		//Debug.Log($"LastFolder Host: {folderUri.Host}");
 
 		var uriSegments = new List<string>();
@@ -393,7 +399,7 @@ public class FilesPanelScript : MonoBehaviour
 
 		if (uiCon.curFolderMI != null)
 		{
-			if (vpCon.sd != null) uiCon.curFolderMI.lastScrollPos = vpCon.sd.FilesListScroll;	// recall scroll position
+			if (VrPlayerController.sdm.sd != null) uiCon.curFolderMI.lastScrollPos = VrPlayerController.sdm.sd.FilesListScroll;	// recall scroll position
 			StartCoroutine(OpenFolderCoroutine(uiCon.curFolderMI));
 		}
 		else

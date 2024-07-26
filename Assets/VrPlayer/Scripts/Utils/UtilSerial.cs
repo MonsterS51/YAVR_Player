@@ -97,9 +97,6 @@ public static class UtilSerial
 	}
 
 
-	public static string savePath = Application.persistentDataPath + "/save_data.json";
-
-
 
 
 }

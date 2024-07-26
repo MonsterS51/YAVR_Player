@@ -195,7 +195,7 @@ public class GazeInputModuleX : PointerInputModule
 			var clicked = ExecuteEvents.Execute(pointerEvent.pointerClick, pointerEvent, ExecuteEvents.pointerClickHandler);
 
 			//make some noise on click
-			if (clicked) VrPlayerController.Vibrate();
+			if (clicked) Utils.Vibrate();
 		}
 		if (pointerEvent.pointerDrag != null && pointerEvent.dragging)
 		{
