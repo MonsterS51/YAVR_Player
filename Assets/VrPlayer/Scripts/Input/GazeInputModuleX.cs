@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -13,8 +14,8 @@ using UnityEngine.UI;
 public class GazeInputModuleX : PointerInputModule
 {
 	public GameObject reticle;
-	public GameObject currentFocusedObject;
-	public bool focusedIsClickable = false;
+	public GameObject targetObject;
+	public bool targetIsClickable = false;
 
 	private float gazeInteval = 1.5f;
 	public float gazeTimer = 0;
@@ -64,18 +65,18 @@ public class GazeInputModuleX : PointerInputModule
 		if (!gazeEnabled) return;
 
 		// gaze object changed
-		if (gazeObject != currentFocusedObject)
+		if (gazeObject != targetObject)
 		{
-			gazeObject = currentFocusedObject;
+			gazeObject = targetObject;
 
-			if (gazeObject != null && focusedIsClickable)
+			if (gazeObject != null && targetIsClickable)
 			{
 				// gaze start
 				gazeTimer = gazeInteval;
 				gazeInProgress = true;
 			}
 
-			if (gazeObject == null | !focusedIsClickable)
+			if (gazeObject == null | !targetIsClickable)
 			{
 				// abort gaze
 				gazeTimer = 0;
@@ -112,34 +113,36 @@ public class GazeInputModuleX : PointerInputModule
 		pointerEventData.pointerCurrentRaycast = FindFirstRaycast(raycastResults);
 
 		//process 'OnPointerEnter'
-		if (pointerEventData.pointerEnter != currentFocusedObject)
+		if (pointerEventData.pointerEnter != targetObject)
 		{
 			// deselect previous element
 			HandlePointerExitAndEnter(pointerEventData, null);
-			HandlePointerExitAndEnter(pointerEventData, currentFocusedObject);
-			pointerEventData.pointerEnter = currentFocusedObject;
+			HandlePointerExitAndEnter(pointerEventData, targetObject);
+			pointerEventData.pointerEnter = targetObject;
 		}
 
 		var eventGo = pointerEventData.pointerCurrentRaycast.gameObject;
 
 		// update reticle color on change focus
-		if (currentFocusedObject != eventGo)
+		if (targetObject != eventGo)
 		{
-			focusedIsClickable = IsClickable(eventGo);
-			SetReticleColor(focusedIsClickable ? Color.cyan : Color.white);
+			targetIsClickable = IsClickable(eventGo);
+			SetReticleColor(targetIsClickable ? Color.cyan : Color.white);
 		}
 
-		currentFocusedObject = eventGo;
+		targetObject = eventGo;
 
 		GazeProcess(pointerEventData);
 
 		// Process the first mouse button fully
-		if (IsTriggerPushed()) ProcessMousePress(pointerEventData);
+		if (IsTriggerPushed() && IsPushTimeoutOver()) 
+			ProcessMousePress(pointerEventData);
+
 		ProcessMove(pointerEventData);
 		//ProcessDrag(pointerEventData);
 
 		//- hide reticle on nothing
-		reticle.SetActive(currentFocusedObject != null);
+		reticle.SetActive(targetObject != null);
 	}
 
 
@@ -248,5 +251,19 @@ public class GazeInputModuleX : PointerInputModule
 		return false;
 	}
 
+
+	// Some timeout system for pushes
+
+	private readonly Stopwatch pushTimeoutSW = Stopwatch.StartNew();
+	private readonly int timeotTimeMs = 100;
+	private bool IsPushTimeoutOver()
+	{
+		if (pushTimeoutSW.ElapsedMilliseconds > timeotTimeMs) {
+			pushTimeoutSW.Restart();
+			return true; 
+		}
+		if (!pushTimeoutSW.IsRunning) pushTimeoutSW.Restart();
+		return false;
+	}
 
 }

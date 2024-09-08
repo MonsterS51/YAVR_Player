@@ -1355,7 +1355,6 @@ GameObject:
   - component: {fileID: 221425283}
   - component: {fileID: 221425284}
   - component: {fileID: 221425285}
-  - component: {fileID: 221425286}
   - component: {fileID: 221425287}
   m_Layer: 0
   m_Name: Controllers
@@ -1470,20 +1469,6 @@ MonoBehaviour:
   totalTime: {fileID: 511130515}
   mediaInfo: {fileID: 1301894256}
   msgText: {fileID: 434955005}
---- !u!114 &221425286
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 221425280}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d33b238297d77bd44a080faa148ef5c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  uiCon: {fileID: 221425283}
-  vpCon: {fileID: 221425282}
 --- !u!114 &221425287
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6827,7 +6812,7 @@ MonoBehaviour:
   m_PoseSource: 2
   m_PoseProviderComponent: {fileID: 0}
   m_TrackingType: 0
-  m_UpdateType: 0
+  m_UpdateType: 1
   m_UseRelativeTransform: 0
 --- !u!81 &811466320
 AudioListener:
@@ -6878,7 +6863,7 @@ Camera:
     height: 1
   near clip plane: 0.01
   far clip plane: 20000
-  field of view: 60
+  field of view: 90
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -13204,6 +13189,7 @@ GameObject:
   - component: {fileID: 1864300783}
   - component: {fileID: 1864300785}
   - component: {fileID: 1864300786}
+  - component: {fileID: 1864300788}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -13285,12 +13271,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SendPointerHoverToParent: 1
   reticle: {fileID: 922255921}
-  currentFocusedObject: {fileID: 0}
-  focusedIsClickable: 0
+  targetObject: {fileID: 0}
+  targetIsClickable: 0
   gazeTimer: 2
   gazeEnabled: 0
   gazeInProgress: 0
   gazeObject: {fileID: 0}
+--- !u!114 &1864300788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1864300781}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d33b238297d77bd44a080faa148ef5c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiCon: {fileID: 221425283}
+  vpCon: {fileID: 221425282}
+  fps: {fileID: 221425284}
 --- !u!1 &1868573279
 GameObject:
   m_ObjectHideFlags: 0

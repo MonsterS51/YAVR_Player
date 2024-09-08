@@ -213,6 +213,11 @@ public class FilesPanelScript : MonoBehaviour
 		VrPlayerController.sdm.sd.FilesListScroll = uiCon.curFolderMI.lastScrollPos;
 	}
 
+	public void MoveScroll(float delta)
+	{
+		if (!uiCon.IsUiEnabled) return;
+		scrollRectGo.verticalNormalizedPosition += delta;
+	}
 
 	//---
 

@@ -1,6 +1,7 @@
 ﻿using Google.XR.Cardboard;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Haptics;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.InputSystem.Utilities;
 
@@ -8,11 +9,11 @@ internal class GamepadScript : MonoBehaviour
 {
 	public UiController uiCon;
 	public VrPlayerController vpCon;
+	public FilesPanelScript fps;
 
 	private bool volumeLongPress = false;
 	private float nextUpdate = 0.15f;
 
-	// Update is called once per frame
 	void Update()
 	{
 
@@ -51,8 +52,11 @@ internal class GamepadScript : MonoBehaviour
 		if (gp[GamepadButton.LeftTrigger].wasPressedThisFrame)
 			uiCon.Seek(false);
 
+		var leftStickY = gp.leftStick.ReadValue().y;
+		if (leftStickY > 0.1f | leftStickY < -0.1f)
+			fps.MoveScroll(leftStickY * Time.smoothDeltaTime);
 
-		// vlume with long pree support
+		// volume with long press support
 		volumeLongPress = (gp[GamepadButton.RightShoulder].isPressed | gp[GamepadButton.LeftShoulder].isPressed);
 
 		if (volumeLongPress && Time.time >= nextUpdate)

@@ -5,7 +5,6 @@ using System.Linq;
 using Google.XR.Cardboard;
 using UnityEngine;
 using UnityEngine.UI;
-using static StereoVrManager;
 
 public class UiController : MonoBehaviour
 {
@@ -80,7 +79,8 @@ public class UiController : MonoBehaviour
 		vpCon.Stop();
 		vpCon.Open(mi.media, autoPlay);
 		curPlayedMI = mi;
-		mps.UpdateTitle(mi);
+
+		mps.UiUpdate();
 	}
 
 	///<summary> Play next/prev file from current folder. </summary>
@@ -129,19 +129,21 @@ public class UiController : MonoBehaviour
 		var step = 2;
 		vpCon.AddVolume(positive ? step : -step);
 		SetMessageText($"Volume: {vpCon.mediaPlayer.Volume} %");
+		mps.UiUpdate();
 	}
 
 	public void Seek(bool positive)
 	{
-		var stepMs = 100000;
-		vpCon.Seek(positive ? stepMs : -stepMs);
-		mps.SetMessageText($"Seek {(positive ? "+" : "-")}{stepMs / 1000}s");
+		var seekVal = vpCon.Seek(positive);
+		mps.SetMessageText($"Seek {(positive ? ">>" : "<<")} {seekVal}ms");
+		mps.UiUpdate();
 	}
 
 	public void AddZoom(bool positive = true)
 	{
 		vpCon.svm.AddZoom(positive);
 		mps.SetMessageText($"Zoom {vpCon.svm.ZoomPercent} {(positive ? "+" : "-")}");
+		mps.UiUpdate();
 	}
 
 }

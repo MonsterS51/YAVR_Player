@@ -58,7 +58,7 @@ public class MainPanelScript : MonoBehaviour
 	}
 
 
-	private void UiUpdate()
+	public void UiUpdate()
 	{
 		if (msgTimer > 0) msgTimer -= 1;
 		else msgText.SetActive(false);
@@ -77,7 +77,7 @@ public class MainPanelScript : MonoBehaviour
 		UpdateMediaTime();
 	}
 
-	public void UpdateTitle(MediaItem mi)
+	private void UpdateTitle(MediaItem mi)
 	{
 		if (mi?.media == null) return;
 		var title = mi.name;

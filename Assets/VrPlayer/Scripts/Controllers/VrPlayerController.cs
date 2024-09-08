@@ -227,11 +227,25 @@ public class VrPlayerController : MonoBehaviour
 		svm.SetSphereBlack();
 	}
 
-	public void Seek(long timeDelta)
+	public int Seek(bool forward)
 	{
-		if (!mediaPlayer.IsSeekable) return;
-		Debug.Log($"{nameof(Seek)} : {mediaPlayer.Time} + {timeDelta}");
-		mediaPlayer?.SetTime(mediaPlayer.Time + timeDelta);
+		if (!mediaPlayer.IsSeekable) return 0;
+		//mediaPlayer?.SetTime(mediaPlayer.Time + timeDelta);
+
+		var multStep = 0.1f;
+		var totalMs = mediaPlayer.Media.Duration;
+		if (totalMs > 300000) multStep = 0.05f;
+		var seekSize = (int)(totalMs * multStep);
+
+		var targetTime = mediaPlayer.Time + seekSize;
+		if (!forward) targetTime = mediaPlayer.Time - seekSize;
+		targetTime = Math.Clamp(targetTime, 0, totalMs);
+
+		mediaPlayer?.SetTime(targetTime, true);
+
+		Debug.Log($"{nameof(Seek)} : {mediaPlayer.Time} + {seekSize} = {targetTime}");
+
+		return seekSize;
 	}
 
 	public void SetTime(long time)
@@ -244,7 +258,7 @@ public class VrPlayerController : MonoBehaviour
 	{
 		if (!mediaPlayer.IsSeekable) return;
 		Debug.Log($"{nameof(SetPosition)} : {posPercent}");
-		mediaPlayer?.SetPosition(posPercent);
+		mediaPlayer?.SetPosition(posPercent, true);
 	}
 
 	public void AddVolume(int volume)
@@ -370,8 +384,8 @@ public class VrPlayerController : MonoBehaviour
 		};
 
 
-		mediaPlayer.FileCaching = 1000;
-		mediaPlayer.NetworkCaching = 1000;
+		//mediaPlayer.FileCaching = 1000;
+		//mediaPlayer.NetworkCaching = 1000;
 
 		mediaPlayer.SetVolume(100);
 		if (sdm?.sd != null) mediaPlayer.SetVolume(sdm.sd.Volume);

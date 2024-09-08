@@ -1,19 +1,13 @@
 {
     "m_SelectedDeviceId": "65a155e1",
     "m_SelectedProcess": {
-        "deviceId": "",
-        "name": "",
-        "processId": 0,
+        "deviceId": "65a155e1",
+        "name": "com.MonsterNest.YAVRPlayer",
+        "processId": 7151,
         "exited": false
     },
     "m_SelectedPriority": 0,
     "m_KnownProcessesForSerialization": [
-        {
-            "deviceId": "65a155e1",
-            "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 30444,
-            "exited": true
-        },
         {
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
@@ -36,6 +30,12 @@
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
             "processId": 17031,
+            "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 7151,
             "exited": false
         }
     ],
