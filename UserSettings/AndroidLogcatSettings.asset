@@ -3,29 +3,11 @@
     "m_SelectedProcess": {
         "deviceId": "65a155e1",
         "name": "com.MonsterNest.YAVRPlayer",
-        "processId": 7151,
+        "processId": 5079,
         "exited": false
     },
     "m_SelectedPriority": 0,
     "m_KnownProcessesForSerialization": [
-        {
-            "deviceId": "65a155e1",
-            "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 32237,
-            "exited": true
-        },
-        {
-            "deviceId": "65a155e1",
-            "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 2520,
-            "exited": true
-        },
-        {
-            "deviceId": "65a155e1",
-            "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 10234,
-            "exited": true
-        },
         {
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
@@ -36,6 +18,30 @@
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
             "processId": 7151,
+            "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 30256,
+            "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 3760,
+            "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "ch.deletescape.lawnchair.plah",
+            "processId": 18361,
+            "exited": false
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "com.MonsterNest.YAVRPlayer",
+            "processId": 5079,
             "exited": false
         }
     ],
@@ -108,6 +114,17 @@
         "BitRateK": 20000,
         "DisplayIdEnabled": false,
         "DisplayId": ""
+    },
+    "m_ScreenCaptureSettings": {
+        "Mode": 0,
+        "m_LastSaveLocation": [
+            "D:\\WorkFolder\\YAVR_Player",
+            "D:\\WorkFolder\\YAVR_Player"
+        ]
+    },
+    "m_QueryLayoutSettings": {
+        "LastLayoutSaveLocation": "",
+        "LastScreenshotSaveLocation": ""
     },
     "m_InputSettings": {
         "ShiftModifier": false,
