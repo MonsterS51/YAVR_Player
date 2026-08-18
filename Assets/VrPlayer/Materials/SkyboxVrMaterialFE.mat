@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SkyboxVrMaterial
-  m_Shader: {fileID: 108, guid: 0000000000000000f000000000000000, type: 0}
+  m_Name: SkyboxVrMaterialFE
+  m_Shader: {fileID: 4800000, guid: 0a0468cc91a386747a94d542d4f066ed, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -63,10 +63,15 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
+    - _CenterULeft: 0.25
+    - _CenterURight: 0.75
+    - _CenterVLeft: 0.5
+    - _CenterVRight: 0.5
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _Exposure: 1
+    - _FOV: 190
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -78,6 +83,9 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
+    - _ProjectionType: 0
+    - _RadiusU: 0.25
+    - _RadiusV: 0.5
     - _Rotation: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1

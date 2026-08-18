@@ -134,8 +134,8 @@ public class UiController : MonoBehaviour
 
 	public void Seek(bool positive)
 	{
-		var seekVal = vpCon.Seek(positive);
-		mps.SetMessageText($"Seek {(positive ? ">>" : "<<")} {seekVal}ms");
+		vpCon.Seek(positive, out var seekVal, out var targetTime);
+		mps.SetMessageText($"Seek {Utils.GetFormatedTimeStr(seekVal)} {(positive ? ">>" : "<<")} to {Utils.GetFormatedTimeStr(targetTime)}");		
 		mps.UiUpdate();
 	}
 

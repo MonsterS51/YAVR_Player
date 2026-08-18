@@ -1,25 +1,13 @@
 {
     "m_SelectedDeviceId": "65a155e1",
     "m_SelectedProcess": {
-        "deviceId": "65a155e1",
-        "name": "com.MonsterNest.YAVRPlayer",
-        "processId": 5079,
+        "deviceId": "",
+        "name": "",
+        "processId": 0,
         "exited": false
     },
     "m_SelectedPriority": 0,
     "m_KnownProcessesForSerialization": [
-        {
-            "deviceId": "65a155e1",
-            "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 17031,
-            "exited": true
-        },
-        {
-            "deviceId": "65a155e1",
-            "name": "com.MonsterNest.YAVRPlayer",
-            "processId": 7151,
-            "exited": true
-        },
         {
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
@@ -36,12 +24,18 @@
             "deviceId": "65a155e1",
             "name": "ch.deletescape.lawnchair.plah",
             "processId": 18361,
-            "exited": false
+            "exited": true
         },
         {
             "deviceId": "65a155e1",
             "name": "com.MonsterNest.YAVRPlayer",
             "processId": 5079,
+            "exited": true
+        },
+        {
+            "deviceId": "65a155e1",
+            "name": "ch.deletescape.lawnchair.plah",
+            "processId": 18952,
             "exited": false
         }
     ],

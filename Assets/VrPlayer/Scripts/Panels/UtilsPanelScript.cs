@@ -15,8 +15,11 @@ public class UtilsPanelScript : MonoBehaviour
 	[Header("VR")]
 	public GameObject Btn180;
 	public GameObject Btn360;
+	public GameObject BtnFe190;
+	public GameObject BtnFe200;
 	public GameObject BtnSBS;
 	public GameObject BtnOU;
+	public GameObject BtnFE;
 	public GameObject BtnNone;
 
 	[Header("Zoom")]
@@ -42,10 +45,13 @@ public class UtilsPanelScript : MonoBehaviour
 	{
 		BtnSBS.GetComponent<Button>().onClick.AddListener(() => { vpCon.svm.SetVideoLayout(StereoMode.SBS); });
 		BtnOU.GetComponent<Button>().onClick.AddListener(() => { vpCon.svm.SetVideoLayout(StereoMode.OU); });
+		BtnFE.GetComponent<Button>().onClick.AddListener(() => { vpCon.svm.SetVideoLayout(StereoMode.SBS_FISHEYE); });
 		BtnNone.GetComponent<Button>().onClick.AddListener(() => { vpCon.svm.SetVideoLayout(StereoMode.None); });
 
-		Btn180.GetComponent<Button>().onClick.AddListener(() => { vpCon.svm.SetImageType(false); });
-		Btn360.GetComponent<Button>().onClick.AddListener(() => { vpCon.svm.SetImageType(true); });
+		Btn180.GetComponent<Button>().onClick.AddListener(() => { vpCon.svm.SetImageType(StereoAngleMode.EQR_180); });
+		Btn360.GetComponent<Button>().onClick.AddListener(() => { vpCon.svm.SetImageType(StereoAngleMode.EQR_360); });
+		BtnFe190.GetComponent<Button>().onClick.AddListener(() => { vpCon.svm.SetImageType(StereoAngleMode.FE_190); });
+		BtnFe200.GetComponent<Button>().onClick.AddListener(() => { vpCon.svm.SetImageType(StereoAngleMode.FE_200); });
 
 		zoomMinusBtn.GetComponent<Button>().onClick.AddListener(() => { uiCon.AddZoom(false); UiUpdate(); });
 		zoomPlusBtn.GetComponent<Button>().onClick.AddListener(() => { uiCon.AddZoom(true); UiUpdate(); });
@@ -72,6 +78,23 @@ public class UtilsPanelScript : MonoBehaviour
 		zoomText.GetComponentInChildren<TextMeshProUGUI>().text = $"{vpCon.svm.ZoomPercent:0} %";
 		volText.GetComponentInChildren<TextMeshProUGUI>().text = $"{vpCon.mediaPlayer?.Volume}";
 		gamepadInfoPanel.SetActive(Gamepad.current != null && !Gamepad.current.name.Contains("AndroidGamepad"));
+
+		// видимость кнопок изменения угла по режиму развертки
+		if (vpCon.svm.isFisheyeMode)
+		{
+			Btn180.SetActive(false);
+			Btn360.SetActive(false);
+			BtnFe190.SetActive(true);
+			BtnFe200.SetActive(true);
+		} else
+		{
+			Btn180.SetActive(true);
+			Btn360.SetActive(true);
+			BtnFe190.SetActive(false);
+			BtnFe200.SetActive(false);
+		}
+
+
 	}
 }
 

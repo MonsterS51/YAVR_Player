@@ -15,6 +15,9 @@ public class VrPlayerController : MonoBehaviour
 
 	public GameObject sphere;
 
+	public Material srcEqrPanoMat;
+	public Material srcFisheyeMat;
+
 	//Screens
 	public Renderer screen;					//Assign a mesh to render on a 3d object
 	public RawImage canvasScreen;			//Assign a Canvas RawImage to render on a GUI object
@@ -39,7 +42,7 @@ public class VrPlayerController : MonoBehaviour
 	{
 		sdm.LoadData($"{Application.persistentDataPath}/save_data.json");
 
-		svm.SetSphereMaterial(sphere);
+		svm.SetMaterials(sphere, srcEqrPanoMat, srcFisheyeMat);
 		svm.SetSphereBlack();
 
 		// 0 + 60			=> держит условно плавные 60fps даже при 120Hz, при тротлинге начинает жестко дропать до 20fps
@@ -227,25 +230,24 @@ public class VrPlayerController : MonoBehaviour
 		svm.SetSphereBlack();
 	}
 
-	public int Seek(bool forward)
+	public void Seek(bool forward, out long seekInMs, out long targetTime)
 	{
-		if (!mediaPlayer.IsSeekable) return 0;
-		//mediaPlayer?.SetTime(mediaPlayer.Time + timeDelta);
+		seekInMs = 0;
+		targetTime = 0;
+		if (!mediaPlayer.IsSeekable) return;
 
 		var multStep = 0.1f;
 		var totalMs = mediaPlayer.Media.Duration;
 		if (totalMs > 300000) multStep = 0.05f;
-		var seekSize = (int)(totalMs * multStep);
+		seekInMs = (long)(totalMs * multStep);
 
-		var targetTime = mediaPlayer.Time + seekSize;
-		if (!forward) targetTime = mediaPlayer.Time - seekSize;
+		targetTime = mediaPlayer.Time + seekInMs;
+		if (!forward) targetTime = mediaPlayer.Time - seekInMs;
 		targetTime = Math.Clamp(targetTime, 0, totalMs);
 
 		mediaPlayer?.SetTime(targetTime, true);
 
-		Debug.Log($"{nameof(Seek)} : {mediaPlayer.Time} + {seekSize} = {targetTime}");
-
-		return seekSize;
+		Debug.Log($"{nameof(Seek)} : {mediaPlayer.Time} + {seekInMs} = {targetTime}");
 	}
 
 	public void SetTime(long time)

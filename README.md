@@ -6,15 +6,16 @@ Yet Another VR Player for Google Cardboard based on <a href="https://unity.com">
 
 # Features:
 * VR: 180°/360°.
-* 3D frame layout: None, Over/Under or Side-by-Side.
+* 3D frame layout: None, Over/Under, Side-by-Side, LR Fisheye (190°/200°).
 * Up to 4096x2048 video dimension. 
-* Any video format supported by your phone (and LibVLC).
+* Any video format supported by your Android (and LibVLC).
 * Fullspeed SMB LAN support over WiFi.
 * Gaze control, gamepad support.
 * File explorer with thumbnail generation.
 * Android built-in VR headset configuration with QR codes
 (you can make custom QR config with <a href="http://www.sitesinvr.com">this</a>).
 * Zoom preferences.
+* In-app separate volume control.
 
 ## Bugs and problems:
 * Distorted LibVLC watermark on bottom. Used a trial package and I don't have $100 for a license yet (and it's not worth it).
